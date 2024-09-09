@@ -13,6 +13,7 @@
 #include "player.h"
 #include "string.h"
 #include "note.h"
+#include "song.h"
 
 //flags
 bool firstCamMove = false;
@@ -22,6 +23,7 @@ vec3 up = {0.0f, 1.0f, 0.0f};
 double mouseX;
 double mouseY;
 float dt;
+float songTime;
 GLubyte pixels[32*32*3] = {0};
 
 unsigned int VBO;
@@ -30,6 +32,7 @@ unsigned int shader, lightingShader, uiShader;
 unsigned int tilesTexture, wallTexture, levelTexture, blackTexture;
 //shader locations
 unsigned int viewLoc;
+ANote aNotes[1024];
 
 Note note;
 
@@ -60,6 +63,7 @@ mat4x4 proj, view, model;
 vec3 lookAhead;
 
 void InitGame() {
+  songTime = 0.0f;
   windowWidth = 800;
   windowHeight = 600;
   glGenVertexArrays(1, &VAO);
@@ -116,7 +120,11 @@ void InitGame() {
     },
     .position = {1.0f, -0.5f},
     .active = true,
+    .time = 1.0f,
   };
+
+  // Testing song loading
+  readSong("res/songs/song1.txt", aNotes);
 }
 
 void SetupLighting() {
@@ -137,6 +145,7 @@ void SetupLighting() {
 }
 void GameUpdate(float deltaTime) {
     dt = deltaTime;
+    songTime += deltaTime;
     glBindVertexArray(VAO);
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
@@ -170,8 +179,8 @@ void GameUpdate(float deltaTime) {
 
     // testing "strings"
     RenderString(VBO, uiShader, blackTexture, activeCamera);
-    RenderNote(VBO, uiShader, blackTexture, activeCamera, &note, deltaTime);
-
+    renderNotes(aNotes, 1024, songTime, VBO,uiShader, blackTexture);
+   // RenderNote(VBO, uiShader, blackTexture, activeCamera, &note, songTime);
 }
 
 void DeleteBuffers() {
@@ -199,9 +208,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
- // if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
- //   fpsMode = !fpsMode;
- // }
+  if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+    songTime = 0.0f;
+  }
   if (key == GLFW_KEY_W && action == GLFW_PRESS) {
     inputs.forward.Down = true;
   } else if (key == GLFW_KEY_W && action == GLFW_RELEASE) {

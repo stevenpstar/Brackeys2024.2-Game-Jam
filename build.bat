@@ -16,4 +16,5 @@ gcc -Wall -Wextra -g -fmax-errors=1000 -o ^
 ./src/game/game.c ^
 ./src/game/string.c ^
 ./src/game/note.c ^
+./src/game/song.c ^
 -Idep -Ldep -lglfw3 -lgdi32 -lopengl32

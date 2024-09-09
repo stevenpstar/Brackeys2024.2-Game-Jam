@@ -15,9 +15,9 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, C
 
   float playInd[30] = {
     -0.8f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
-     -0.6f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
-     -0.6f,  0.1f, -0.0f,  1.f, 1.f, // top right
-     -0.6f,  0.1f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+     -0.75f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
+     -0.75f,  0.1f, -0.0f,  1.f, 1.f, // top right
+     -0.75f,  0.1f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
     -0.8f,  0.1f, -0.0f,  0.f, 1.f, // top left
     -0.8f, -0.1f, -0.0f,  0.f, 0.f, // bottom left duplicate     
   };
@@ -58,7 +58,7 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, C
 
 }
 
-void RenderNote(unsigned int VBO, unsigned int shader, unsigned int texture, Camera *camera, Note *note, float deltaTime) {
+void RenderNote(unsigned int VBO, unsigned int shader, unsigned int texture, Camera *camera, Note *note, float songTime) {
   float data[30] = {
     -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
      0.1f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
@@ -85,8 +85,5 @@ void RenderNote(unsigned int VBO, unsigned int shader, unsigned int texture, Cam
   glDrawArrays(GL_TRIANGLES, 0, 6);
 
   // Update note position
-  note->position[0] -= deltaTime;
-  if (note->position[0] < -1.0f) {
-    note->position[0] = 1.0f;
-  }
+  note->position[0] = note->time - songTime;
 }
