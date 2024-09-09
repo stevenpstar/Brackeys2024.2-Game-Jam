@@ -1,7 +1,19 @@
 #include "../../dep/glad/glad.h"
+#include <stdio.h>
 #include "note.h"
 void initNote(Note *note, int string, float time, float duration) {}
-void renderNotes(ANote *notes, int notePoolCount, float songTime, unsigned int VBO, unsigned int shader, unsigned int texture) {
+void renderNotes(ANote *notes,
+    int notePoolCount,
+    float songTime,
+    unsigned int VBO,
+    unsigned int shader,
+    unsigned int texture,
+    int nextNoteIndex) {
+
+  // TODO: This is maybe not final value, may need more checks to see how 
+  // close the next note is on the string
+  float afterNoteBuffer = 0.3f;
+
   float data[30] = {
     -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
      0.1f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
@@ -19,26 +31,28 @@ void renderNotes(ANote *notes, int notePoolCount, float songTime, unsigned int V
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+  vec3 colour = {0.0f, 0.0f, 1.0f};
   for (int i = 0; i < notePoolCount; i++) {
-      if (notes[i].string == -1) {
+//      printf("note %d: %f, %d\n", i, notes[i].time, notes[i].string);
+      if (notes[i].string < 0) {
         break;
       }
-      position[0] = notes[i].time - songTime;
-      position[1] = -0.5f;
+      if (!notes[i].active) {
+        continue;
+      }
+      position[0] = (notes[i].time - songTime) + 0.225f;
+      position[1] = -0.3f - (0.2f * notes[i].string);
       mat4x4 model;
       mat4x4_identity(model);
-      mat4x4_translate_in_place(model, position[0], -0.5f, 0.0f);
+      mat4x4_translate_in_place(model, position[0], position[1], -0.1f);
       unsigned int modelLoc = glGetUniformLocation(shader, "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+      //vec3 colour = {0.0f, 0.0f, 1.0f};
+      glUniform3f(glGetUniformLocation(shader, "col"), notes[i].colour[0], notes[i].colour[1], notes[i].colour[2]);
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture);
       glDrawArrays(GL_TRIANGLES, 0, 6);
 
-      // Update note position
-//      notes[i].position[0] = notes[i].time - songTime;
-//      if (notes[i].position[0] < -1.5) {
-//        notes[i].active = false;
-//      }
     }
 }

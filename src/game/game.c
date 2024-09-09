@@ -1,3 +1,7 @@
+//standard
+#include <math.h>
+#include <stdbool.h>
+//dependencies
 #include "../../dep/glad/glad.h"
 #include "../../dep/GLFW/glfw3.h"
 #include "../../dep/linmath.h"
@@ -14,6 +18,7 @@
 #include "string.h"
 #include "note.h"
 #include "song.h"
+#include "game.h"
 
 //flags
 bool firstCamMove = false;
@@ -33,6 +38,10 @@ unsigned int tilesTexture, wallTexture, levelTexture, blackTexture;
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
+float inputTime;
+float nextInputTime;
+ANote *nextNote;
+int nextNoteIndex = 0;
 
 Note note;
 
@@ -64,6 +73,7 @@ vec3 lookAhead;
 
 void InitGame() {
   songTime = 0.0f;
+  inputTime = 0.0f;
   windowWidth = 800;
   windowHeight = 600;
   glGenVertexArrays(1, &VAO);
@@ -125,6 +135,8 @@ void InitGame() {
 
   // Testing song loading
   readSong("res/songs/song1.txt", aNotes);
+  nextInputTime = aNotes[0].time;
+  setNextNote(1);
 }
 
 void SetupLighting() {
@@ -178,9 +190,10 @@ void GameUpdate(float deltaTime) {
     }
 
     // testing "strings"
-    RenderString(VBO, uiShader, blackTexture, activeCamera);
-    renderNotes(aNotes, 1024, songTime, VBO,uiShader, blackTexture);
-   // RenderNote(VBO, uiShader, blackTexture, activeCamera, &note, songTime);
+    RenderString(VBO, uiShader, blackTexture, -0.5f);
+    RenderString(VBO, uiShader, blackTexture, -0.7f);
+    RenderString(VBO, uiShader, blackTexture, -0.9f);
+    renderNotes(aNotes, 1024, songTime, VBO,uiShader, blackTexture, nextNoteIndex);
 }
 
 void DeleteBuffers() {
@@ -204,12 +217,50 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
+void setNextNote(int string) {
+  // TODO: Magic numbers
+  for (int i = 0; i < 1024; i++) {
+    if (aNotes[i].string == -1) {
+      return;
+    }
+    if (aNotes[i].string == string && aNotes[i].time > songTime) {
+      nextNote = &aNotes[i];
+      nextNoteIndex = i;
+      aNotes[i].colour[0] = 0.0f;
+      aNotes[i].colour[1] = 0.0f;
+      aNotes[i].colour[2] = 1.0f;
+      printf("Next note has been set: %d\n", nextNoteIndex);
+      return;
+    }
+  }
+}
+
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
   if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
     songTime = 0.0f;
+    inputTime = 0.0f;
+  }
+  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    inputTime = songTime;
+    // 0.225f is a buffer for where the indicator is (to time your presses)
+    float nextNoteTime = songTime - nextNote->time;
+    float difference = fabsf(nextNoteTime - 1.0f);
+    if (difference < 0.2) {
+      aNotes[nextNoteIndex].colour[0] = 0.0f;
+      aNotes[nextNoteIndex].colour[1] = 1.0f;
+      aNotes[nextNoteIndex].colour[2] = 0.0f;
+    } else {
+      aNotes[nextNoteIndex].colour[0] = 1.0f;
+      aNotes[nextNoteIndex].colour[1] = 0.0f;
+      aNotes[nextNoteIndex].colour[2] = 0.0f;
+    }
+    setNextNote(1);
+//    printf("difference: %f\n", difference);
+//    printf("inputTime: %f, nextInputTime: %f\n", inputTime, nextInputTime);
+//    printf("test: %f\n", nextNoteTime);
   }
   if (key == GLFW_KEY_W && action == GLFW_PRESS) {
     inputs.forward.Down = true;

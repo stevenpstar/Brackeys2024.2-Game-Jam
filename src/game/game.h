@@ -12,4 +12,5 @@ void InitGame();
 void SetupLighting();
 void GameUpdate(float deltaTime);
 void DeleteBuffers();
+void setNextNote(int string);
 #endif

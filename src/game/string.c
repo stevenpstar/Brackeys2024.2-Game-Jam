@@ -3,7 +3,7 @@
 #include "../engine/camera.h"
 #include "note.h"
 
-void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, Camera *camera) {
+void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, float y) {
   float data[30] = {
     -1.f, -0.01f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
      1.f, -0.01f, -0.0f,  1.f, 0.f, // bottom right
@@ -31,9 +31,12 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, C
   glEnableVertexAttribArray(1);
   mat4x4 model;
   mat4x4_identity(model);
-  mat4x4_translate_in_place(model, 0.0f, -0.5f, 0.0f);
+  mat4x4_translate_in_place(model, 0.0f, y, 0.0f);
   unsigned int modelLoc = glGetUniformLocation(shader, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+
+  vec3 colour = {1.0f, 0.0f, 0.0f};
+  glUniform3f(glGetUniformLocation(shader, "col"), colour[0], colour[1], colour[2]);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -58,7 +61,7 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, C
 
 }
 
-void RenderNote(unsigned int VBO, unsigned int shader, unsigned int texture, Camera *camera, Note *note, float songTime) {
+void RenderNote(unsigned int VBO, unsigned int shader, unsigned int texture, Note *note, float songTime) {
   float data[30] = {
     -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
      0.1f, -0.1f, -0.0f,  1.f, 0.f, // bottom right

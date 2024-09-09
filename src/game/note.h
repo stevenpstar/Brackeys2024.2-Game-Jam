@@ -13,8 +13,10 @@ typedef struct ANote {
   int string;
   float time;
   float duration;
+  vec3 colour;
+  bool active;
 } ANote;
 
 void initNote(Note *note, int string, float time, float duration);
-void renderNotes(ANote notes[30], int notePoolCount, float songTime, unsigned int VBO, unsigned int shader, unsigned int texture);
+void renderNotes(ANote notes[30], int notePoolCount, float songTime, unsigned int VBO, unsigned int shader, unsigned int texture, int nextNoteIndex);
 #endif
