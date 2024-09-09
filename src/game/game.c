@@ -11,7 +11,8 @@
 #include "input.h"
 #include "tile.h"
 #include "player.h"
-#include <stdio.h>
+#include "string.h"
+#include "note.h"
 
 //flags
 bool firstCamMove = false;
@@ -25,10 +26,12 @@ GLubyte pixels[32*32*3] = {0};
 
 unsigned int VBO;
 unsigned int VAO;
-unsigned int shader, lightingShader;
-unsigned int tilesTexture, wallTexture, levelTexture;
+unsigned int shader, lightingShader, uiShader;
+unsigned int tilesTexture, wallTexture, levelTexture, blackTexture;
 //shader locations
 unsigned int viewLoc;
+
+Note note;
 
 Inputs inputs;
 int tiles[1024] = {0};
@@ -40,6 +43,8 @@ float planeData[48] = {
   -0.5f,  0.5f, -0.0f, 0.0f, 1.0f, 0.0f, 0.f, 1.f, // top left
   -0.5f, -0.5f, -0.0f, 0.0f, 1.0f, 0.0f, 0.f, 0.f, // bottom left duplicate     
 };
+
+Note notePool[30];
 
 int windowWidth, windowHeight;
 
@@ -73,6 +78,8 @@ void InitGame() {
       "./src/shaders/fragment.frag");
   lightingShader = createShader("./src/shaders/vertex.vert", 
       "./src/shaders/lighting.frag");
+  uiShader = createShader("./src/shaders/ui.vert",
+      "./src/shaders/ui.frag");
 
   wallTexture = loadTextureRGB("res/wallhue.png");
 
@@ -94,7 +101,22 @@ void InitGame() {
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels);
   glGetError();
 
+  blackTexture = loadTextureRGB("res/blacksq.png");
+
   tilesTexture = createWorld(tiles, "res/floortiles.png", pixels);
+
+  note = (Note){
+    .data = {
+    -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+     0.1f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
+     0.1f,  0.1f, -0.0f,  1.f, 1.f, // top right
+     0.1f,  0.1f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+    -0.1f,  0.1f, -0.0f,  0.f, 1.f, // top left
+    -0.1f, -0.1f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+    },
+    .position = {1.0f, -0.5f},
+    .active = true,
+  };
 }
 
 void SetupLighting() {
@@ -118,6 +140,8 @@ void GameUpdate(float deltaTime) {
     glBindVertexArray(VAO);
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
+
+    processCameraMovement(activeCamera, &inputs, true, up);
 
     // camera
     vec3_add(lookAhead, activeCamera->position, activeCamera->direction);
@@ -143,6 +167,11 @@ void GameUpdate(float deltaTime) {
         renderWall(tiles[i], row, col, tile, view, wallTexture, VBO, shader);
      }
     }
+
+    // testing "strings"
+    RenderString(VBO, uiShader, blackTexture, activeCamera);
+    RenderNote(VBO, uiShader, blackTexture, activeCamera, &note, deltaTime);
+
 }
 
 void DeleteBuffers() {

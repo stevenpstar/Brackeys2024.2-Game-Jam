@@ -76,7 +76,7 @@ void setFOV(float fov, Camera *camera) {
   //mat4x4_perspective(camera->proj, camera->fov, 800.0f / 600.0f, 0.1f, 100.0f);
 }
 
-void processCameraMovement(Camera *camera, bool *idle, Inputs *inputs, bool fpsMode, vec3 up) {
+void processCameraMovement(Camera *camera, Inputs *inputs, bool fpsMode, vec3 up) {
   vec3 camFront;
   if (fpsMode) {
     camFront[0] = 0.0f;
@@ -112,12 +112,6 @@ void processCameraMovement(Camera *camera, bool *idle, Inputs *inputs, bool fpsM
     vec3_scale(cross, cross, 0.0125f);
     vec3_add(camera->position, camera->position, cross);
   }
-  if (!inputs->forward.Down && !inputs->backwards.Down && !inputs->left.Down && !inputs->right.Down) {
-    *idle = true;
-  } else {
-    *idle = false;
-  }
-
 }
 
 

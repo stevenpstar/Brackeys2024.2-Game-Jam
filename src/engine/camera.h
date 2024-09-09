@@ -23,5 +23,5 @@ void mouseLook(float xoff, float yoff, Camera *camera, float deltaTime);
 void setDirection(Camera *camera);
 void setProjection(unsigned int shader, const char* uniformName, Camera *camera, bool perspective, float w, float h);
 void setFOV(float fov, Camera *camera);
-void processCameraMovement(Camera *camera, bool *idle, Inputs *inputs, bool fpsMode, vec3 up);
+void processCameraMovement(Camera *camera, Inputs *inputs, bool fpsMode, vec3 up);
 #endif

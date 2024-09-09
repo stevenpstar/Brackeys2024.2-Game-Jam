@@ -1,4 +1,4 @@
-gcc -Wall -Wextra -g -o ^
+gcc -Wall -Wextra -g -fmax-errors=1000 -o ^
 ./build/main ^
 ./src/main.c ^
 ./src/glad.c ^
@@ -15,4 +15,5 @@ gcc -Wall -Wextra -g -o ^
 ./src/game/input.c ^
 ./src/game/game.c ^
 ./src/game/string.c ^
+./src/game/note.c ^
 -Idep -Ldep -lglfw3 -lgdi32 -lopengl32
