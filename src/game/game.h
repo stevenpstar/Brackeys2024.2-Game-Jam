@@ -13,4 +13,6 @@ void SetupLighting();
 void GameUpdate(float deltaTime);
 void DeleteBuffers();
 void setNextNote(int string);
+void playString(int string, const char *noteFile);
+void resetSong();
 #endif

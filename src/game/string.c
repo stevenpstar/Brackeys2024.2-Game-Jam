@@ -5,12 +5,12 @@
 
 void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, float y) {
   float data[30] = {
-    -1.f, -0.01f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
-     1.f, -0.01f, -0.0f,  1.f, 0.f, // bottom right
-     1.f,  0.01f, -0.0f,  1.f, 1.f, // top right
-     1.f,  0.01f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
-    -1.f,  0.01f, -0.0f,  0.f, 1.f, // top left
-    -1.f, -0.01f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+    -1.f, -0.005f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+     1.f, -0.005f, -0.0f,  1.f, 0.f, // bottom right
+     1.f,  0.005f, -0.0f,  1.f, 1.f, // top right
+     1.f,  0.005f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+    -1.f,  0.005f, -0.0f,  0.f, 1.f, // top left
+    -1.f, -0.005f, -0.0f,  0.f, 0.f, // bottom left duplicate     
   };
 
   float playInd[30] = {

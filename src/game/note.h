@@ -18,5 +18,12 @@ typedef struct ANote {
 } ANote;
 
 void initNote(Note *note, int string, float time, float duration);
-void renderNotes(ANote notes[30], int notePoolCount, float songTime, unsigned int VBO, unsigned int shader, unsigned int texture, int nextNoteIndex);
+void renderNotes(ANote notes[30],
+    int notePoolCount,
+    float songTime,
+    unsigned int VBO,
+    unsigned int shader,
+    unsigned int texture,
+    int nextNoteIndex[3],
+    void (*setNextNote)(int));
 #endif

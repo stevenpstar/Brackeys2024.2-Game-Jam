@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "note.h"
 #ifndef H_SONG
 #define H_SONG
 

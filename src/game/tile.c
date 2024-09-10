@@ -144,7 +144,7 @@ void renderTile(int tile, int row, int col, mat4x4 model, mat4x4 view, unsigned 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned int texture, unsigned int VBO, unsigned int shader) {
+void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned int texture, unsigned int textureTop, unsigned int VBO, unsigned int shader) {
   for (int c=0;c<4;c++) {
     mat4x4_identity(model);
     if (c == 0) {
@@ -186,7 +186,7 @@ void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned in
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  glBindTexture(GL_TEXTURE_2D, textureTop);
   glDrawArrays(GL_TRIANGLES, 0, 6);
 
 }

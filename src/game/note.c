@@ -8,19 +8,21 @@ void renderNotes(ANote *notes,
     unsigned int VBO,
     unsigned int shader,
     unsigned int texture,
-    int nextNoteIndex) {
+    int *nextNoteIndex,
+    void (*setNextNote)(int)) {
 
   // TODO: This is maybe not final value, may need more checks to see how 
   // close the next note is on the string
   float afterNoteBuffer = 0.3f;
+  //printf("SongTime: %f\n", songTime);
 
   float data[30] = {
-    -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
-     0.1f, -0.1f, -0.0f,  1.f, 0.f, // bottom right
-     0.1f,  0.1f, -0.0f,  1.f, 1.f, // top right
-     0.1f,  0.1f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
-    -0.1f,  0.1f, -0.0f,  0.f, 1.f, // top left
-    -0.1f, -0.1f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+    -0.1f, -0.04f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+     0.1f, -0.04f, -0.0f,  1.f, 0.f, // bottom right
+     0.1f,  0.04f, -0.0f,  1.f, 1.f, // top right
+     0.1f,  0.04f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+    -0.1f,  0.04f, -0.0f,  0.f, 1.f, // top left
+    -0.1f, -0.04f, -0.0f,  0.f, 0.f, // bottom left duplicate     
   };
 
   vec2 position;
@@ -33,21 +35,22 @@ void renderNotes(ANote *notes,
   glEnableVertexAttribArray(1);
   vec3 colour = {0.0f, 0.0f, 1.0f};
   for (int i = 0; i < notePoolCount; i++) {
-//      printf("note %d: %f, %d\n", i, notes[i].time, notes[i].string);
       if (notes[i].string < 0) {
         break;
       }
-      if (!notes[i].active) {
-        continue;
-      }
       position[0] = (notes[i].time - songTime) + 0.225f;
-      position[1] = -0.3f - (0.2f * notes[i].string);
+      position[1] = -0.35f - (0.1f * notes[i].string);
+      if (songTime > notes[i].time + 1.0f && notes[i].active) {
+        notes[i].active = false;
+        if (nextNoteIndex[notes[i].string-1] == i) {
+          setNextNote(notes[i].string);
+        }
+      }
       mat4x4 model;
       mat4x4_identity(model);
       mat4x4_translate_in_place(model, position[0], position[1], -0.1f);
       unsigned int modelLoc = glGetUniformLocation(shader, "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
-      //vec3 colour = {0.0f, 0.0f, 1.0f};
       glUniform3f(glGetUniformLocation(shader, "col"), notes[i].colour[0], notes[i].colour[1], notes[i].colour[2]);
 
       glActiveTexture(GL_TEXTURE0);
