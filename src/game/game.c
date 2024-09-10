@@ -42,10 +42,10 @@ unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTextu
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
-float inputTimes[3] = {0};
+float inputTimes[6] = {0};
 float nextInputTime;
 ANote *nextNote;
-int nextNoteIndex[3] = {0};
+int nextNoteIndex[6] = {0};
 
 Note note;
 
@@ -97,9 +97,9 @@ void InitGame() {
   // setup cameras
   vec3 target = {0.0f, 0.0f, 0.0f};
   vec3 pos = {0.0f, 0.0f, -7.0f};
-  vec3 fpsPos = {0.0f, 0.4f, 0.0f};
-  cam = createCamera(pos, target, 2.5f);
-  fpsCam = createCamera(fpsPos, target, 2.5f);
+  vec3 fpsPos = {11.5f, 3.4f, 8.0f};
+  cam = createCamera(pos, target, 2.5f, -90.0f, 0.0f);
+  fpsCam = createCamera(fpsPos, target, 2.5f, 180.0f, -35.0f);
   activeCamera = &fpsCam;
 
   shader = createShader("./src/shaders/vertex.vert", 
@@ -150,28 +150,30 @@ void InitGame() {
 
   // Testing song loading
   readSong("res/songs/song1.txt", aNotes);
-  nextInputTime = aNotes[0].time;
-  setNextNote(1);
-  setNextNote(2);
-  setNextNote(3);
-
-  // Testing mini audio library
+  resetSong();
 }
 
 void SetupLighting() {
   lightCubes[0] = createCubeLight(VBO, 0.0f, 0.5f, 1.0f);
   lightCubes[1] = createCubeLight(VBO, 2.0f, 0.5f, 1.0f);
-  lightCubes[2] = createCubeLight(VBO, 9.0f, 0.5f, 9.0f);
+  lightCubes[2] = createCubeLight(VBO, 8.0f, 0.5f, 11.0f);
   lightCubes[3] = createCubeLight(VBO, 24.0f, 0.5f, 24.0f);
 
   vec3 lDir = {-0.2f, -1.0f, -0.3f};
-  vec3 lAmb = {0.2f, 0.2f, 0.2f};
-  vec3 lDiff = {0.5f, 0.5f, 0.5f};
+  vec3 lAmb = {0.1f, 0.1f, 0.1f};
+  vec3 lDiff = {0.2f, 0.5f, 0.2f};
   setDirectionalLight(lDir, lDiff, lAmb, shader);
   for (int i = 0; i < 4; i++) {
     vec3 lPos = { lightCubes[i].posX, lightCubes[i].posY, lightCubes[i].posZ };
-    vec3 diff = { 0.8f, 0.8f, 0.8f };
-    setPointLight(i, lPos, diff, shader);
+    vec3 diff;
+    if (i == 2) {
+      vec3 diff = { 1.f, 0.0f, 0.0f };
+      setPointLight(i, lPos, diff, shader);
+    }
+    else {
+      vec3 diff = { 0.2f, 0.2f, 0.2f };
+      setPointLight(i, lPos, diff, shader);
+    }
   }
 }
 void GameUpdate(float deltaTime) {
@@ -204,7 +206,7 @@ void GameUpdate(float deltaTime) {
         renderTile(tiles[i], row, col, tile, view, tilesTexture, VBO, shader);
       } else {
         resetTileTexCoords(planeData, VBO);
-        renderWall(tiles[i], row, col, tile, view, wallTexture, wallTextureTop, VBO, shader);
+        renderWall(tiles[i], row, col, tile, view, wallTexture, blackTexture, VBO, shader);
      }
     }
 
@@ -223,7 +225,9 @@ void GameUpdate(float deltaTime) {
         uiShader,
         blackTexture,
         nextNoteIndex,
-        setNextNote);
+        setNextNote,
+        windowWidth,
+        windowHeight);
 }
 
 void DeleteBuffers() {
@@ -245,7 +249,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseX = xpos;
   mouseY = ypos;
 
-  mouseLook(xoffset, yoffset, activeCamera, dt);
+  //mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
 void setNextNote(int string) {
@@ -260,7 +264,6 @@ void setNextNote(int string) {
       aNotes[i].colour[0] = 0.0f;
       aNotes[i].colour[1] = 0.0f;
       aNotes[i].colour[2] = 1.0f;
-      printf("Next note (index: %d) has been set for string %d\n", nextNoteIndex[string-1], string);
       return;
     } else if (aNotes[i].string == string && aNotes[i].active && i > nextNoteIndex[string-1]) {
       // set to neutral colour
@@ -279,62 +282,47 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     resetSong();
   }
   if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-
     if (mods == 1) {
-      ma_engine_play_sound(&engine, "res/a4.wav", NULL);
+      playString(1, "res/a4.wav", true);
     } else {
-      ma_engine_play_sound(&engine, "res/a3.wav", NULL);
+      playString(1, "res/a3.wav", false);
     }
-    inputTimes[0] = songTime - aNotes[nextNoteIndex[0]].time;
-    float difference = fabsf(inputTimes[0] - 1.0f);
-    if (difference < 0.5) {
-      aNotes[nextNoteIndex[0]].colour[0] = 0.0f;
-      aNotes[nextNoteIndex[0]].colour[1] = 1.0f;
-      aNotes[nextNoteIndex[0]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[0]].active = false;
-    } else {
-      aNotes[nextNoteIndex[0]].colour[0] = 1.0f;
-      aNotes[nextNoteIndex[0]].colour[1] = 0.0f;
-      aNotes[nextNoteIndex[0]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[0]].active = false;
-    }
-    setNextNote(1);
   }
   if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-    ma_engine_play_sound(&engine, "res/c4.wav", NULL);
-    inputTimes[1] = songTime - aNotes[nextNoteIndex[1]].time;
-    float difference = fabsf(inputTimes[1] - 1.0f);
-    if (difference < 0.5) {
-      aNotes[nextNoteIndex[1]].colour[0] = 0.0f;
-      aNotes[nextNoteIndex[1]].colour[1] = 1.0f;
-      aNotes[nextNoteIndex[1]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[1]].active = false;
+    if (mods == 1) {
+      playString(2, "res/c5.wav", true);
     } else {
-      aNotes[nextNoteIndex[1]].colour[0] = 1.0f;
-      aNotes[nextNoteIndex[1]].colour[1] = 0.0f;
-      aNotes[nextNoteIndex[1]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[1]].active = false;
+      playString(2, "res/c4.wav", false);
     }
-    setNextNote(2);
   }
   if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-    ma_engine_play_sound(&engine, "res/d4.wav", NULL);
-    inputTimes[2] = songTime - aNotes[nextNoteIndex[2]].time;
-    float difference = fabsf(inputTimes[2] - 1.0f);
-    if (difference < 0.5) {
-      aNotes[nextNoteIndex[2]].colour[0] = 0.0f;
-      aNotes[nextNoteIndex[2]].colour[1] = 1.0f;
-      aNotes[nextNoteIndex[2]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[2]].active = false;
+    if (mods == 1) {
+      playString(3, "res/d5.wav", true);
     } else {
-      aNotes[nextNoteIndex[2]].colour[0] = 1.0f;
-      aNotes[nextNoteIndex[2]].colour[1] = 0.0f;
-      aNotes[nextNoteIndex[2]].colour[2] = 0.0f;
-      aNotes[nextNoteIndex[2]].active = false;
+      playString(3, "res/d4.wav", false);
     }
-    setNextNote(3);
   }
-
+  if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+    if (mods == 1) {
+      playString(4, "res/e5.wav", true);
+    } else {
+      playString(4, "res/e4.wav", false);
+    }
+  }
+  if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+    if (mods == 1) {
+      playString(5, "res/f5.wav", true);
+    } else {
+      playString(5, "res/f4.wav", false);
+    }
+  }
+  if (key == GLFW_KEY_L && action == GLFW_PRESS) {
+    if (mods == 1) {
+      playString(6, "res/g5.wav", true);
+    } else {
+      playString(6, "res/g4.wav", false);
+    }
+  }
 
   if (key == GLFW_KEY_W && action == GLFW_PRESS) {
     inputs.forward.Down = true;
@@ -381,8 +369,35 @@ void resetSong() {
   inputTimes[0] = 0.0f;
   inputTimes[1] = 0.0f;
   inputTimes[2] = 0.0f;
+  inputTimes[3] = 0.0f;
+  inputTimes[4] = 0.0f;
+  inputTimes[5] = 0.0f;
+
   setNextNote(1);
   setNextNote(2);
   setNextNote(3);
+  setNextNote(4);
+  setNextNote(5);
+  setNextNote(6);
 }
+
+void playString(int string, const char *noteFile, bool octave) {
+
+  ma_engine_play_sound(&engine, noteFile, NULL);
+  inputTimes[string-1] = songTime - aNotes[nextNoteIndex[string-1]].time;
+  float difference = fabsf(inputTimes[string-1] - 1.0f);
+  if (difference < 0.5) {
+    aNotes[nextNoteIndex[string-1]].colour[0] = 0.0f;
+    aNotes[nextNoteIndex[string-1]].colour[1] = 1.0f;
+    aNotes[nextNoteIndex[string-1]].colour[2] = 0.0f;
+    aNotes[nextNoteIndex[string-1]].active = false;
+  } else {
+    aNotes[nextNoteIndex[string-1]].colour[0] = 1.0f;
+    aNotes[nextNoteIndex[string-1]].colour[1] = 0.0f;
+    aNotes[nextNoteIndex[string-1]].colour[2] = 0.0f;
+    aNotes[nextNoteIndex[string-1]].active = false;
+  }
+  setNextNote(string);
+}
+
 

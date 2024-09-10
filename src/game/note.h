@@ -25,5 +25,7 @@ void renderNotes(ANote notes[30],
     unsigned int shader,
     unsigned int texture,
     int nextNoteIndex[3],
-    void (*setNextNote)(int));
+    void (*setNextNote)(int),
+    int windowWidth,
+    int windowHeight);
 #endif

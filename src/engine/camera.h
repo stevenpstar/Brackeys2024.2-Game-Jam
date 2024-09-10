@@ -18,7 +18,7 @@ typedef struct Camera {
   float fov;
 } Camera;
 float degToRad(float degree);
-Camera createCamera(float *position, float *target, float speed);
+Camera createCamera(float *position, float *target, float speed, float yaw, float pitch);
 void mouseLook(float xoff, float yoff, Camera *camera, float deltaTime);
 void setDirection(Camera *camera);
 void setProjection(unsigned int shader, const char* uniformName, Camera *camera, bool perspective, float w, float h);

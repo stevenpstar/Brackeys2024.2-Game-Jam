@@ -11,13 +11,13 @@ float degToRad(float degree) {
   return degree * M_PI / 180;
 }
 
-Camera createCamera(float *position, float *target, float speed) {
+Camera createCamera(float *position, float *target, float speed, float yaw, float pitch) {
   Camera cam = {
     .position = {position[0], position[1], position[2]},
     .target = {target[0], target[1], target[2]},
     .speed = speed,
-    .yaw = -90.0f,
-    .pitch = 0.0f,
+    .yaw = yaw,
+    .pitch = pitch,
     .roll = 0.0f,
     .sensitivity = 0.04f,
     .lastX = 400.0,

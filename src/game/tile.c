@@ -176,10 +176,17 @@ void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned in
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
+    mat4x4_translate_in_place(model, 0.0f, 1.f, 0.0f);
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
   }
   // mega scuffed roof for walls
   mat4x4_identity(model);
-  mat4x4_translate_in_place(model, col * 0.5f, 1.f, row * 0.5f);
+  mat4x4_translate_in_place(model, col * 0.5f, 1.5f, row * 0.5f);
   mat4x4_rotate(model, model, 1.0f, 0.0f, 0.0f, degToRad(90.0f));
   mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
   unsigned int modelLoc = glGetUniformLocation(shader, "model");

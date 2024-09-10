@@ -9,20 +9,17 @@ void renderNotes(ANote *notes,
     unsigned int shader,
     unsigned int texture,
     int *nextNoteIndex,
-    void (*setNextNote)(int)) {
-
-  // TODO: This is maybe not final value, may need more checks to see how 
-  // close the next note is on the string
-  float afterNoteBuffer = 0.3f;
-  //printf("SongTime: %f\n", songTime);
+    void (*setNextNote)(int),
+    int windowWidth,
+    int windowHeight) {
 
   float data[30] = {
-    -0.1f, -0.04f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
-     0.1f, -0.04f, -0.0f,  1.f, 0.f, // bottom right
-     0.1f,  0.04f, -0.0f,  1.f, 1.f, // top right
-     0.1f,  0.04f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
-    -0.1f,  0.04f, -0.0f,  0.f, 1.f, // top left
-    -0.1f, -0.04f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+    -0.5f, -0.5f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+     0.5f, -0.5f, -0.0f,  1.f, 0.f, // bottom right
+     0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right
+     0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+    -0.5f,  0.5f, -0.0f,  0.f, 1.f, // top left
+    -0.5f, -0.5f, -0.0f,  0.f, 0.f, // bottom left duplicate     
   };
 
   vec2 position;
@@ -46,9 +43,13 @@ void renderNotes(ANote *notes,
           setNextNote(notes[i].string);
         }
       }
+      float aRatio = (float)windowWidth/(float)windowHeight;
+      float hRatio = (float)windowHeight/(float)windowWidth;
       mat4x4 model;
       mat4x4_identity(model);
       mat4x4_translate_in_place(model, position[0], position[1], -0.1f);
+      mat4x4_scale_aniso(model, model, 0.05f * (float)windowHeight/(float)windowWidth,
+          0.05f, 1.f);
       unsigned int modelLoc = glGetUniformLocation(shader, "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
       glUniform3f(glGetUniformLocation(shader, "col"), notes[i].colour[0], notes[i].colour[1], notes[i].colour[2]);
@@ -56,6 +57,5 @@ void renderNotes(ANote *notes,
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture);
       glDrawArrays(GL_TRIANGLES, 0, 6);
-
     }
 }
