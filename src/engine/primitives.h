@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "../../dep/linmath.h"
 #ifndef H_PRIMITIVES
 #define H_PRIMITIVES
 
@@ -49,6 +50,22 @@ typedef struct Sprite {
   int indices[6];
 } Sprite;
 
+typedef struct UISprite {
+  float posX;
+  float posY;
+  float posZ;
+  unsigned int texture;
+  int frameWidth;
+  int frameHeight;
+  int texWidth;
+  int texHeight;
+  int frameCount;
+  int currentFrame;
+  float frameTime;
+  float data[30]; 
+  int indices[6];
+} UISprite;
+
 typedef struct P_CUBE_LIGHT {
   float posX;
   float posY;
@@ -63,6 +80,12 @@ P_CUBE_LIGHT createCubeLight(unsigned int VBO, float x, float y, float z);
 Sprite createSprite(unsigned int VBO, const char *tex);
 Sprite createAnimatedSprite(unsigned int VBO, unsigned int EBO, float x, float y, float z, const char *tex, int frameWidth,
     int frameHeight, int texWidth, int texHeight);
+UISprite createAnimatedUI(unsigned int VBO,
+    vec3 pos,
+    const char *tex,
+    int fWidth, int fHeight,
+    int tWidth, int tHeight);
 void SetFrame(Sprite *sprite, int frame, unsigned int VBO, bool flipHorizontal);
+void SetFrameUI(UISprite *sprite, int frame, unsigned int VBO, bool flipHorizontal);
 void setCubeLight(unsigned int VBO, float *vertices);
 #endif

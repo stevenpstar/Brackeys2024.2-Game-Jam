@@ -35,7 +35,7 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, f
   unsigned int modelLoc = glGetUniformLocation(shader, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
 
-  vec3 colour = {1.0f, 0.0f, 0.0f};
+  vec3 colour = {1.0f, 1.0f, 1.0f};
   glUniform3f(glGetUniformLocation(shader, "col"), colour[0], colour[1], colour[2]);
 
   glActiveTexture(GL_TEXTURE0);
@@ -44,20 +44,20 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, f
 
   // render play point timer indicator
   //
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(float), playInd, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-  mat4x4_identity(model);
-  mat4x4_translate_in_place(model, 0.0f, -0.5f, 0.0f);
-  modelLoc = glGetUniformLocation(shader, "model");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+//  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//  glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(float), playInd, GL_STATIC_DRAW);
+//  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+//  glEnableVertexAttribArray(0);
+//  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+//  glEnableVertexAttribArray(1);
+//  mat4x4_identity(model);
+//  mat4x4_translate_in_place(model, 0.0f, -0.5f, 0.0f);
+//  modelLoc = glGetUniformLocation(shader, "model");
+//  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+//
+//  glActiveTexture(GL_TEXTURE0);
+//  glBindTexture(GL_TEXTURE_2D, texture);
+//  glDrawArrays(GL_TRIANGLES, 0, 6);
 
 }
 

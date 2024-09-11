@@ -6,10 +6,25 @@
 #include <time.h>
 #include <stdbool.h>
 #include "game/game.h"
+#include "game/songeditor.h"
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 vec3 lightPos = {0.0f, -2.0f, 0.0f};
+
+typedef enum SCREEN {
+  MAINMENU,
+  OPTIONS,
+  GAME,
+  SONGEDITOR,
+} SCREEN;
+
+GLFWwindow *window;
+SCREEN currentScreen;
+
+void SetScreen(int screen);
+void SetGameScreen();
+void SetSongEditorScreen();
 
 int main(void) {
   srand(time(NULL));
@@ -18,7 +33,7 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow* window = glfwCreateWindow(800, 600, "Base", NULL, NULL);
+  window = glfwCreateWindow(800, 600, "Base", NULL, NULL);
   if (window == NULL) {
     printf("GLFW Window creation failed\n");
     glfwTerminate();
@@ -38,13 +53,14 @@ int main(void) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glViewport(0, 0, 800, 600);
 
-  glfwSetFramebufferSizeCallback(window, resizeWindow);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  glfwSetCursorPosCallback(window, mouseMove);
-  glfwSetKeyCallback(window, keyCallback);
+ // glfwSetFramebufferSizeCallback(window, resizeWindow);
+//  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//  glfwSetCursorPosCallback(window, mouseMove);
+//  glfwSetKeyCallback(window, keyCallback);
 
-  InitGame();
-  SetupLighting();
+//  InitGame();
+//  SetupLighting();
+  SetScreen(GAME);
 
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -54,12 +70,55 @@ int main(void) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GameUpdate(deltaTime);
-
+    if (currentScreen == GAME) {
+      GameUpdate(deltaTime);
+    } else if (currentScreen == SONGEDITOR) {
+      UpdateSongEditor(deltaTime);
+    }
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
-  DeleteBuffers();
+  if (currentScreen == GAME) {
+    DeleteBuffers();
+  } else if (currentScreen == SONGEDITOR) {
+    CleanUpSongEditor();
+  }
   glfwTerminate();
   return 0;
+}
+
+void SetScreen(int screen) {
+  switch (screen) {
+    case MAINMENU:
+      break;
+    case OPTIONS:
+      break;
+    case GAME:
+      SetGameScreen();
+      break;
+    case SONGEDITOR:
+      SetSongEditorScreen();
+      break;
+    default:
+      break;
+  }
+}
+
+void SetGameScreen() {
+  InitGame();
+  SetupLighting();
+  currentScreen = GAME;
+  glfwSetFramebufferSizeCallback(window, resizeWindow);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetCursorPosCallback(window, mouseMove);
+  glfwSetKeyCallback(window, keyCallback);
+}
+
+void SetSongEditorScreen() {
+  InitSongEditor();
+  currentScreen = SONGEDITOR;
+  glfwSetFramebufferSizeCallback(window, SE_resizeWindow);
+  glfwSetCursorPosCallback(window, SE_mouseMove);
+  glfwSetKeyCallback(window, SE_keyCallback);
+
 }

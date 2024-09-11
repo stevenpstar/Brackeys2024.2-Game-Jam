@@ -7,6 +7,9 @@
 #include "../../dep/glad/glad.h"
 #include "../../dep/GLFW/glfw3.h"
 #include "../../dep/linmath.h"
+#define GLT_IMPLEMENTATION
+#define GLT_MANUAL_VIEWPORT
+#include "../../dep/gltext.h"
 //engine
 #include "../engine/camera.h"
 #include "../engine/shader.h"
@@ -21,9 +24,17 @@
 #include "note.h"
 #include "song.h"
 #include "game.h"
+#include "key.h"
 
 //flags
 bool firstCamMove = false;
+bool stringOneDown = false;
+bool stringTwoDown = false;
+bool stringThreeDown = false;
+bool stringFourDown = false;
+bool stringFiveDown = false;
+bool stringSixDown = false;
+
 // globals
 ma_result result;
 ma_engine engine;
@@ -35,10 +46,20 @@ float dt;
 float songTime;
 GLubyte pixels[32*32*3] = {0};
 
+// Characters
+Sprite bardSprite;
+Player bard;
+Animation bardAnim = {
+  .state = IDLE_DOWN,
+  .startFrame = 0,
+  .endFrame = 0,
+};
+
 unsigned int VBO;
 unsigned int VAO;
 unsigned int shader, lightingShader, uiShader;
-unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTexture;
+unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTexture, whiteTexture;
+UISprite aKey, sKey, dKey, jKey, kKey, lKey;
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
@@ -48,6 +69,8 @@ ANote *nextNote;
 int nextNoteIndex[6] = {0};
 
 Note note;
+int totalScore = 0;
+int currentScore = 0;
 
 Inputs inputs;
 int tiles[1024] = {0};
@@ -75,7 +98,12 @@ P_CUBE_LIGHT lightCubes[4];
 mat4x4 proj, view, model;
 vec3 lookAhead;
 
+//Text
+GLTtext *text;
+
 void InitGame() {
+  gltInit();
+  text = gltCreateText();
   result = ma_engine_init(NULL, &engine);
   if (result != MA_SUCCESS) {
     printf("MiniAudio failed to init\n");
@@ -97,7 +125,7 @@ void InitGame() {
   // setup cameras
   vec3 target = {0.0f, 0.0f, 0.0f};
   vec3 pos = {0.0f, 0.0f, -7.0f};
-  vec3 fpsPos = {11.5f, 3.4f, 8.0f};
+  vec3 fpsPos = {11.f, 2.5f, 8.0f};
   cam = createCamera(pos, target, 2.5f, -90.0f, 0.0f);
   fpsCam = createCamera(fpsPos, target, 2.5f, 180.0f, -35.0f);
   activeCamera = &fpsCam;
@@ -111,6 +139,18 @@ void InitGame() {
 
   wallTexture = loadTextureRGB("res/forestwall16bottom.png");
   wallTextureTop = loadTextureRGB("res/treetop.png");
+  vec3 aKeyPos = { -0.8f, -0.4f, -0.1f };
+  vec3 sKeyPos = { -0.8f, -0.5f, -0.1f };
+  vec3 dKeyPos = { -0.8f, -0.6f, -0.1f };
+  vec3 jKeyPos = { -0.8f, -0.7f, -0.1f };
+  vec3 kKeyPos = { -0.8f, -0.8f, -0.1f };
+  vec3 lKeyPos = { -0.8f, -0.9f, -0.1f };
+  aKey = createAnimatedUI(VBO, aKeyPos,"res/akey.png", 32, 32, 64, 32);
+  sKey = createAnimatedUI(VBO, sKeyPos,"res/skey.png", 32, 32, 64, 32);
+  dKey = createAnimatedUI(VBO, dKeyPos,"res/dkey.png", 32, 32, 64, 32);
+  jKey = createAnimatedUI(VBO, jKeyPos,"res/jkey.png", 32, 32, 64, 32);
+  kKey = createAnimatedUI(VBO, kKeyPos,"res/kkey.png", 32, 32, 64, 32);
+  lKey = createAnimatedUI(VBO, lKeyPos,"res/lkey.png", 32, 32, 64, 32);
 
   setDefaults(&inputs);
 
@@ -131,8 +171,23 @@ void InitGame() {
   glGetError();
 
   blackTexture = loadTextureRGB("res/blacksq.png");
+  whiteTexture = loadTextureRGB("res/whitesq.png");
 
   tilesTexture = createWorld(tiles, "res/foresttiles.png", pixels);
+
+  // Character setup
+  bardSprite = createAnimatedSprite(VBO, VBO, 
+      12.f, 12.f, 12.f, 
+      "res/prototype_character.png", 
+      32, 32, 128, 384);
+  bard.x = 8.f;
+  bard.y = 1.f;
+  bard.z = 8.f;
+  bard.sprite = &bardSprite;
+  bard.anim = &bardAnim;
+  bard.state = 0;
+  bard.framerate = 8;
+  bard.frameTimer = 0.0f;
 
   note = (Note){
     .data = {
@@ -149,14 +204,14 @@ void InitGame() {
   };
 
   // Testing song loading
-  readSong("res/songs/song1.txt", aNotes);
+  readSong("res/songs/song1.txt", aNotes, &totalScore);
   resetSong();
 }
 
 void SetupLighting() {
   lightCubes[0] = createCubeLight(VBO, 0.0f, 0.5f, 1.0f);
   lightCubes[1] = createCubeLight(VBO, 2.0f, 0.5f, 1.0f);
-  lightCubes[2] = createCubeLight(VBO, 8.0f, 0.5f, 11.0f);
+  lightCubes[2] = createCubeLight(VBO, 10.0f, 0.5f, 11.0f);
   lightCubes[3] = createCubeLight(VBO, 24.0f, 0.5f, 24.0f);
 
   vec3 lDir = {-0.2f, -1.0f, -0.3f};
@@ -180,10 +235,11 @@ void GameUpdate(float deltaTime) {
     dt = deltaTime;
     songTime += deltaTime;
     glBindVertexArray(VAO);
+    glBindBuffer(GL_VERTEX_ARRAY, VBO);
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
 
-//    processCameraMovement(activeCamera, &inputs, true, up);
+    processCameraMovement(activeCamera, &inputs, true, up);
 
     // camera
     vec3_add(lookAhead, activeCamera->position, activeCamera->direction);
@@ -194,8 +250,8 @@ void GameUpdate(float deltaTime) {
     viewLoc = glGetUniformLocation(shader, "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (GLfloat *)view);
 
+
     // test rendering world
-    glBindBuffer(GL_VERTEX_ARRAY, VBO);
     for (int i=0;i<1024;i++) {
       int row = floor((float)i / 32);
       int col = i - (32 * row);
@@ -210,28 +266,107 @@ void GameUpdate(float deltaTime) {
      }
     }
 
-    // testing "strings"
-    RenderString(VBO, uiShader, blackTexture, -0.45f);
-    RenderString(VBO, uiShader, blackTexture, -0.55f);
-    RenderString(VBO, uiShader, blackTexture, -0.65f);
-    RenderString(VBO, uiShader, blackTexture, -0.75f);
-    RenderString(VBO, uiShader, blackTexture, -0.85f);
-    RenderString(VBO, uiShader, blackTexture, -0.95f);
+    // render characters
+    glUseProgram(shader);
+    mat4x4 model;
+    mat4x4_identity(model);
+    mat4x4_translate_in_place(model, bard.x, bard.y, bard.z);
+    unsigned int modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, bardSprite.texture);
+//    Animate(&bard, bardAnim, true, deltaTime, VBO);
+    SetFrame(&bardSprite, 0, VBO, false);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glUseProgram(uiShader);
+
+    RenderString(VBO, uiShader, whiteTexture, -0.45f);
+    RenderString(VBO, uiShader, whiteTexture, -0.55f);
+    RenderString(VBO, uiShader, whiteTexture, -0.65f);
+    RenderString(VBO, uiShader, whiteTexture, -0.75f);
+    RenderString(VBO, uiShader, whiteTexture, -0.85f);
+    RenderString(VBO, uiShader, whiteTexture, -0.95f);
 
     renderNotes(aNotes,
         1024,
         songTime,
         VBO,
         uiShader,
-        blackTexture,
+        whiteTexture,
         nextNoteIndex,
         setNextNote,
         windowWidth,
         windowHeight);
+
+    renderKey(&aKey,
+        stringOneDown,
+        VBO,
+        aKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    renderKey(&sKey,
+        stringTwoDown,
+        VBO,
+        sKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    renderKey(&dKey,
+        stringThreeDown,
+        VBO,
+        dKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    renderKey(&jKey,
+        stringFourDown,
+        VBO,
+        jKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    renderKey(&kKey,
+        stringFiveDown,
+        VBO,
+        kKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    renderKey(&lKey,
+        stringSixDown,
+        VBO,
+        lKey.texture,
+        uiShader,
+        windowWidth,
+        windowHeight);
+    gltBeginDraw();
+    char str[128];
+
+  //  gltSetText(text, "Score: ");
+  //  gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+  //  gltDrawText2D(text, 0.5f, 0.5f, 4.0f);
+
+    gltSetText(text, itoa(currentScore, str, 10));
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(text, 10.f, 0.5f, 4.0f);
+
+    gltSetText(text, "/");
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(text, 80.f, 0.5f, 4.0f);
+
+    gltSetText(text, itoa(totalScore, str, 10));
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(text, 120.f, 0.5f, 4.0f);
+
+    gltEndDraw();
 }
 
 void DeleteBuffers() {
   ma_engine_uninit(&engine);
+  gltDeleteText(text);
+  gltTerminate();
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
 }
@@ -249,7 +384,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseX = xpos;
   mouseY = ypos;
 
-  //mouseLook(xoffset, yoffset, activeCamera, dt);
+  mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
 void setNextNote(int string) {
@@ -287,6 +422,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(1, "res/a3.wav", false);
     }
+    stringOneDown = true;
+  } 
+  else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+    stringOneDown = false;
   }
   if (key == GLFW_KEY_S && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -294,6 +433,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(2, "res/c4.wav", false);
     }
+    stringTwoDown = true;
+  } else if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
+    stringTwoDown = false;
   }
   if (key == GLFW_KEY_D && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -301,6 +443,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(3, "res/d4.wav", false);
     }
+    stringThreeDown = true;
+  }
+  else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
+    stringThreeDown = false;
   }
   if (key == GLFW_KEY_J && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -308,6 +454,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(4, "res/e4.wav", false);
     }
+    stringFourDown = true;
+  }
+  else if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
+    stringFourDown = false;
   }
   if (key == GLFW_KEY_K && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -315,6 +465,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(5, "res/f4.wav", false);
     }
+    stringFiveDown = true;
+  }
+  else if (key == GLFW_KEY_K && action == GLFW_RELEASE) {
+    stringFiveDown = false;
   }
   if (key == GLFW_KEY_L && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -322,6 +476,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     } else {
       playString(6, "res/g4.wav", false);
     }
+    stringSixDown = true;
+  }
+  else if (key == GLFW_KEY_L && action == GLFW_RELEASE) {
+    stringSixDown = false;
   }
 
   if (key == GLFW_KEY_W && action == GLFW_PRESS) {
@@ -348,6 +506,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 void resizeWindow(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
+  gltViewport(width, height);
   windowWidth = width;
   windowHeight = height;
   glUseProgram(shader);
@@ -359,6 +518,7 @@ void resizeWindow(GLFWwindow* window, int width, int height) {
 
 void resetSong() {
   songTime = 0.0f;
+  currentScore = 0;
   // reset all notes
   for (int i = 0; i < 1024; i++) {
     aNotes[i].active = true;
@@ -386,7 +546,8 @@ void playString(int string, const char *noteFile, bool octave) {
   ma_engine_play_sound(&engine, noteFile, NULL);
   inputTimes[string-1] = songTime - aNotes[nextNoteIndex[string-1]].time;
   float difference = fabsf(inputTimes[string-1] - 1.0f);
-  if (difference < 0.5) {
+  if (difference < 0.2) {
+    currentScore += 2;
     aNotes[nextNoteIndex[string-1]].colour[0] = 0.0f;
     aNotes[nextNoteIndex[string-1]].colour[1] = 1.0f;
     aNotes[nextNoteIndex[string-1]].colour[2] = 0.0f;

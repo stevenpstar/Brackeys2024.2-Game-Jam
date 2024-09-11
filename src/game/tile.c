@@ -181,8 +181,6 @@ void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned in
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
-
   }
   // mega scuffed roof for walls
   mat4x4_identity(model);

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "note.h"
 // max notes is 1024 for now
-void readSong(const char *filePath, ANote *aNotes) {
+void readSong(const char *filePath, ANote *aNotes, int *totalScore) {
   FILE *fp;
   fp = fopen(filePath, "r");
   char s[1024];
@@ -22,6 +22,7 @@ void readSong(const char *filePath, ANote *aNotes) {
         aNotes[noteCount].colour[1] = 0.0f;
         aNotes[noteCount].colour[2] = 0.0f;
         aNotes[noteCount].active = true;
+
       } 
       token = strtok(NULL, ",");
       if (token != NULL) {
@@ -41,6 +42,7 @@ void readSong(const char *filePath, ANote *aNotes) {
       aNotes[noteCount].string = -1;
       // -1 will denote end of song for now
     }
+    *totalScore = noteCount * 2;
   }
   fclose(fp);
 }
