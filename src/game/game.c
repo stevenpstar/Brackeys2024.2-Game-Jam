@@ -52,7 +52,31 @@ Player bard;
 Animation bardAnim = {
   .state = IDLE_DOWN,
   .startFrame = 0,
-  .endFrame = 0,
+  .endFrame = 1,
+};
+
+Sprite rogueSprite;
+Player rogue;
+Animation rogueAnim = {
+  .state = IDLE_DOWN,
+  .startFrame = 0,
+  .endFrame = 1,
+};
+
+Sprite wizardSprite;
+Player wizard;
+Animation wizardAnim = {
+  .state = IDLE_DOWN,
+  .startFrame = 0,
+  .endFrame = 1,
+};
+
+Sprite knightSprite;
+Player knight;
+Animation knightAnim = {
+  .state = IDLE_DOWN,
+  .startFrame = 0,
+  .endFrame = 1,
 };
 
 unsigned int VBO;
@@ -189,6 +213,45 @@ void InitGame() {
   bard.framerate = 8;
   bard.frameTimer = 0.0f;
 
+  rogueSprite = createAnimatedSprite(VBO, VBO, 
+      12.f, 12.f, 12.f, 
+      "res/prototype_character.png", 
+      32, 32, 128, 384);
+  rogue.x = 8.f;
+  rogue.y = 1.f;
+  rogue.z = 9.f;
+  rogue.sprite = &rogueSprite;
+  rogue.anim = &rogueAnim;
+  rogue.state = 0;
+  rogue.framerate = 8;
+  rogue.frameTimer = 0.0f;
+
+  wizardSprite = createAnimatedSprite(VBO, VBO, 
+      12.f, 12.f, 12.f, 
+      "res/prototype_character.png", 
+      32, 32, 128, 384);
+  wizard.x = 8.f;
+  wizard.y = 1.f;
+  wizard.z = 7.f;
+  wizard.sprite = &wizardSprite;
+  wizard.anim = &wizardAnim;
+  wizard.state = 0;
+  wizard.framerate = 8;
+  wizard.frameTimer = 0.0f;
+
+  knightSprite = createAnimatedSprite(VBO, VBO, 
+      12.f, 12.f, 12.f, 
+      "res/prototype_character.png", 
+      32, 32, 128, 384);
+  knight.x = 9.f;
+  knight.y = 1.f;
+  knight.z = 8.f;
+  knight.sprite = &knightSprite;
+  knight.anim = &knightAnim;
+  knight.state = 0;
+  knight.framerate = 8;
+  knight.frameTimer = 0.0f;
+
   note = (Note){
     .data = {
     -0.1f, -0.1f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
@@ -216,7 +279,7 @@ void SetupLighting() {
 
   vec3 lDir = {-0.2f, -1.0f, -0.3f};
   vec3 lAmb = {0.1f, 0.1f, 0.1f};
-  vec3 lDiff = {0.2f, 0.5f, 0.2f};
+  vec3 lDiff = {0.2f, 0.2f, 0.2f};
   setDirectionalLight(lDir, lDiff, lAmb, shader);
   for (int i = 0; i < 4; i++) {
     vec3 lPos = { lightCubes[i].posX, lightCubes[i].posY, lightCubes[i].posZ };
@@ -239,7 +302,7 @@ void GameUpdate(float deltaTime) {
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
 
-    processCameraMovement(activeCamera, &inputs, true, up);
+    //processCameraMovement(activeCamera, &inputs, true, up);
 
     // camera
     vec3_add(lookAhead, activeCamera->position, activeCamera->direction);
@@ -271,12 +334,47 @@ void GameUpdate(float deltaTime) {
     mat4x4 model;
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, bard.x, bard.y, bard.z);
+    mat4x4_rotate_Y(model, model, degToRad(90.0f));
     unsigned int modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, bardSprite.texture);
-//    Animate(&bard, bardAnim, true, deltaTime, VBO);
-    SetFrame(&bardSprite, 0, VBO, false);
+    Animate(&bard, bardAnim, true, deltaTime, VBO);
+   // SetFrame(&bardSprite, 0, VBO, false);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    mat4x4_identity(model);
+    mat4x4_translate_in_place(model, rogue.x, rogue.y, rogue.z);
+    mat4x4_rotate_Y(model, model, degToRad(90.0f));
+    modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, rogueSprite.texture);
+    Animate(&rogue, rogueAnim, true, deltaTime, VBO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    mat4x4_identity(model);
+    mat4x4_translate_in_place(model, wizard.x, wizard.y, wizard.z);
+    mat4x4_rotate_Y(model, model, degToRad(90.0f));
+    modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, wizardSprite.texture);
+    Animate(&wizard, wizardAnim, true, deltaTime, VBO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    mat4x4_identity(model);
+    mat4x4_translate_in_place(model, knight.x, knight.y, knight.z);
+    mat4x4_rotate_Y(model, model, degToRad(90.0f));
+    modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, knightSprite.texture);
+    Animate(&knight, knightAnim, true, deltaTime, VBO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glUseProgram(uiShader);
@@ -384,7 +482,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseX = xpos;
   mouseY = ypos;
 
-  mouseLook(xoffset, yoffset, activeCamera, dt);
+  //mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
 void setNextNote(int string) {

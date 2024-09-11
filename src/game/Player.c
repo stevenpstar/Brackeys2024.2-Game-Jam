@@ -26,6 +26,7 @@ void Animate(Player *player, Animation anim, bool loop, float deltaTime, unsigne
     player->frameTimer -= frameTime;
   }
   if (!nextFrame) {
+    SetFrame(player->sprite, player->sprite->currentFrame, VBO, flipHoriz);
     return;
   }
   if (player->sprite->currentFrame == endFrame) {
