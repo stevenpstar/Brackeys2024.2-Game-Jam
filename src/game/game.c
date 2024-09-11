@@ -35,9 +35,15 @@ bool stringFourDown = false;
 bool stringFiveDown = false;
 bool stringSixDown = false;
 
+bool guitarRotateUp = true;
+
 // globals
 ma_result result;
+ma_result fireResult;
 ma_engine engine;
+ma_decoder decoder;
+ma_device device;
+ma_device_config deviceConfig;
 
 vec3 up = {0.0f, 1.0f, 0.0f};
 double mouseX;
@@ -50,6 +56,15 @@ GLubyte pixels[32*32*3] = {0};
 Sprite bardSprite;
 Player bard;
 Animation bardAnim = {
+  .state = IDLE_DOWN,
+  .startFrame = 0,
+  .endFrame = 1,
+};
+
+// this doesn't really need to be a player but seems easier 
+Sprite guitarSprite;
+Player guitar;
+Animation guitarAnim = {
   .state = IDLE_DOWN,
   .startFrame = 0,
   .endFrame = 1,
@@ -82,7 +97,7 @@ Animation knightAnim = {
 unsigned int VBO;
 unsigned int VAO;
 unsigned int shader, lightingShader, uiShader;
-unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTexture, whiteTexture;
+unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTexture, whiteTexture, treeTrunk;
 UISprite aKey, sKey, dKey, jKey, kKey, lKey;
 //shader locations
 unsigned int viewLoc;
@@ -129,6 +144,36 @@ void InitGame() {
   gltInit();
   text = gltCreateText();
   result = ma_engine_init(NULL, &engine);
+
+  fireResult = ma_decoder_init_file("res/firesound.wav", NULL, &decoder);
+    if (result != MA_SUCCESS) {
+      printf("fire result issue!\n");
+        return;
+    }
+    
+  ma_data_source_set_looping(&decoder, MA_TRUE);
+
+  deviceConfig = ma_device_config_init(ma_device_type_playback);
+  deviceConfig.playback.format   = decoder.outputFormat;
+  deviceConfig.playback.channels = decoder.outputChannels;
+  deviceConfig.sampleRate        = decoder.outputSampleRate;
+  deviceConfig.dataCallback      = data_callback;
+  deviceConfig.pUserData         = &decoder;
+
+  if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
+      printf("Failed to open playback device.\n");
+      ma_decoder_uninit(&decoder);
+      printf("MiniAudio failed to init decoder\n");
+      return;
+  }
+
+  if (ma_device_start(&device) != MA_SUCCESS) {
+      printf("Failed to start playback device.\n");
+      ma_device_uninit(&device);
+      ma_decoder_uninit(&decoder);
+      printf("MiniAudio failed to init device start\n");
+      return;
+  }
   if (result != MA_SUCCESS) {
     printf("MiniAudio failed to init\n");
     return;
@@ -196,6 +241,7 @@ void InitGame() {
 
   blackTexture = loadTextureRGB("res/blacksq.png");
   whiteTexture = loadTextureRGB("res/whitesq.png");
+  treeTrunk = loadTextureRGB("res/treetrunk.png");
 
   tilesTexture = createWorld(tiles, "res/foresttiles.png", pixels);
 
@@ -213,6 +259,19 @@ void InitGame() {
   bard.framerate = 12;
   bard.frameTimer = 0.0f;
 
+  guitarSprite = createAnimatedSprite(VBO, VBO, 
+      12.f, 12.f, 12.f, 
+      "res/guitar16anim.png", 
+      16, 16, 32, 16);
+  guitar.x = 8.f;
+  guitar.y = 1.f;
+  guitar.z = 8.f;
+  guitar.sprite = &guitarSprite;
+  guitar.anim = &guitarAnim;
+  guitar.state = 0;
+  guitar.framerate = 12;
+  guitar.frameTimer = 0.0f;
+
   rogueSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
       "res/roguechar.png", 
@@ -228,15 +287,15 @@ void InitGame() {
 
   wizardSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
-      "res/prototype_character.png", 
-      32, 32, 128, 384);
+      "res/wizardchar.png", 
+      16, 16, 32, 32);
   wizard.x = 8.f;
   wizard.y = 1.f;
   wizard.z = 7.f;
   wizard.sprite = &wizardSprite;
   wizard.anim = &wizardAnim;
   wizard.state = 0;
-  wizard.framerate = 8;
+  wizard.framerate = 12;
   wizard.frameTimer = 0.0f;
 
   knightSprite = createAnimatedSprite(VBO, VBO, 
@@ -302,7 +361,7 @@ void GameUpdate(float deltaTime) {
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
 
-    //processCameraMovement(activeCamera, &inputs, true, up);
+    processCameraMovement(activeCamera, &inputs, true, up);
 
     // camera
     vec3_add(lookAhead, activeCamera->position, activeCamera->direction);
@@ -312,7 +371,6 @@ void GameUpdate(float deltaTime) {
     mat4x4_look_at(view, activeCamera->position, lookAhead, up);
     viewLoc = glGetUniformLocation(shader, "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (GLfloat *)view);
-
 
     // test rendering world
     for (int i=0;i<1024;i++) {
@@ -328,6 +386,12 @@ void GameUpdate(float deltaTime) {
         renderWall(tiles[i], row, col, tile, view, wallTexture, blackTexture, VBO, shader);
      }
     }
+
+    // render trees
+   // vec3 treePos = { bard.x - 3.0f, bard.y + 2.f, bard.z - 2.0f };
+   // vec3 treeRot = { 0.0f, 1.0f, 0.0f };
+   // vec3 treeScale = { 2.0f, 6.0f, 1.0f };
+   // renderPlane(treePos, treeRot, treeScale, VBO, treeTestTexture, shader);
 
     // render characters
     glUseProgram(shader);
@@ -346,9 +410,26 @@ void GameUpdate(float deltaTime) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     mat4x4_identity(model);
+    mat4x4_translate_in_place(model, bard.x + 0.1f, bard.y - 0.1f, bard.z);
+    mat4x4_scale_aniso(model, model, 0.25f, 0.35f, 0.35f);
+    mat4x4_rotate_Y(model, model, degToRad(90.0f));
+    if (guitarRotateUp) {
+      mat4x4_rotate_Z(model, model, degToRad(15.0f));
+    } else {
+      mat4x4_rotate_Z(model, model, degToRad(-15.0f));
+    }
+    modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, guitarSprite.texture);
+    Animate(&guitar, guitarAnim, true, deltaTime, VBO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    mat4x4_identity(model);
     mat4x4_translate_in_place(model, rogue.x, rogue.y, rogue.z);
     mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
-    mat4x4_rotate_Y(model, model, degToRad(90.0f));
+    mat4x4_rotate_Y(model, model, degToRad(-25.0f));
     modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
     glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
@@ -359,6 +440,7 @@ void GameUpdate(float deltaTime) {
 
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, wizard.x, wizard.y, wizard.z);
+    mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
     mat4x4_rotate_Y(model, model, degToRad(90.0f));
     modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
@@ -464,6 +546,8 @@ void GameUpdate(float deltaTime) {
 }
 
 void DeleteBuffers() {
+  ma_device_uninit(&device);
+  ma_decoder_uninit(&decoder);
   ma_engine_uninit(&engine);
   gltDeleteText(text);
   gltTerminate();
@@ -484,7 +568,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseX = xpos;
   mouseY = ypos;
 
-  //mouseLook(xoffset, yoffset, activeCamera, dt);
+  mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
 void setNextNote(int string) {
@@ -510,6 +594,7 @@ void setNextNote(int string) {
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+  bool guitarAngleChange = false;
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
@@ -521,6 +606,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(1, "res/a4.wav", true);
     } else {
       playString(1, "res/a3.wav", false);
+    }
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
     }
     stringOneDown = true;
   } 
@@ -534,6 +623,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(2, "res/c4.wav", false);
     }
     stringTwoDown = true;
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
+    }
+
   } else if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
     stringTwoDown = false;
   }
@@ -544,6 +638,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(3, "res/d4.wav", false);
     }
     stringThreeDown = true;
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
+    }
+
   }
   else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
     stringThreeDown = false;
@@ -555,6 +654,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(4, "res/e4.wav", false);
     }
     stringFourDown = true;
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
+    }
+
   }
   else if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
     stringFourDown = false;
@@ -566,6 +670,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(5, "res/f4.wav", false);
     }
     stringFiveDown = true;
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
+    }
+
   }
   else if (key == GLFW_KEY_K && action == GLFW_RELEASE) {
     stringFiveDown = false;
@@ -577,6 +686,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       playString(6, "res/g4.wav", false);
     }
     stringSixDown = true;
+    if (!guitarAngleChange) {
+      guitarRotateUp = !guitarRotateUp;
+      guitarAngleChange = true;
+    }
+
   }
   else if (key == GLFW_KEY_L && action == GLFW_RELEASE) {
     stringSixDown = false;
@@ -659,6 +773,19 @@ void playString(int string, const char *noteFile, bool octave) {
     aNotes[nextNoteIndex[string-1]].active = false;
   }
   setNextNote(string);
+}
+
+void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
+{
+    ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
+    if (pDecoder == NULL) {
+        return;
+    }
+
+    /* Reading PCM frames will loop based on what we specified when called ma_data_source_set_looping(). */
+    ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
+
+    (void)pInput;
 }
 
 

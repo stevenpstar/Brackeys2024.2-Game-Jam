@@ -15,6 +15,7 @@ gcc -Wall -Wextra -g -fmax-errors=1000 -o ^
 ./src/game/input.c ^
 ./src/game/game.c ^
 ./src/game/songeditor.c ^
+./src/game/mainmenu.c ^
 ./src/game/string.c ^
 ./src/game/note.c ^
 ./src/game/song.c ^

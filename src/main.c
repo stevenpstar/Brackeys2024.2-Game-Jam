@@ -7,10 +7,13 @@
 #include <stdbool.h>
 #include "game/game.h"
 #include "game/songeditor.h"
+#include "game/mainmenu.h"
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 vec3 lightPos = {0.0f, -2.0f, 0.0f};
+
+bool initialLoad = true;
 
 typedef enum SCREEN {
   MAINMENU,
@@ -25,6 +28,7 @@ SCREEN currentScreen;
 void SetScreen(int screen);
 void SetGameScreen();
 void SetSongEditorScreen();
+void SetMainMenuScreen();
 
 int main(void) {
   srand(time(NULL));
@@ -60,7 +64,7 @@ int main(void) {
 
 //  InitGame();
 //  SetupLighting();
-  SetScreen(GAME);
+  SetScreen(MAINMENU);
 
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -74,6 +78,8 @@ int main(void) {
       GameUpdate(deltaTime);
     } else if (currentScreen == SONGEDITOR) {
       UpdateSongEditor(deltaTime);
+    } else if (currentScreen == MAINMENU) {
+      UpdateMainMenu(deltaTime);
     }
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -82,14 +88,25 @@ int main(void) {
     DeleteBuffers();
   } else if (currentScreen == SONGEDITOR) {
     CleanUpSongEditor();
+  } else if (currentScreen == MAINMENU) {
+    CleanUpMainMenu();
   }
   glfwTerminate();
   return 0;
 }
 
 void SetScreen(int screen) {
+  if (!initialLoad) {
+    if (screen == MAINMENU) {
+      printf("Might crash here on initial load\n");
+      CleanUpMainMenu();
+    }
+  } else {
+    initialLoad = false;
+  }
   switch (screen) {
     case MAINMENU:
+      SetMainMenuScreen();
       break;
     case OPTIONS:
       break;
@@ -120,5 +137,12 @@ void SetSongEditorScreen() {
   glfwSetFramebufferSizeCallback(window, SE_resizeWindow);
   glfwSetCursorPosCallback(window, SE_mouseMove);
   glfwSetKeyCallback(window, SE_keyCallback);
+}
 
+void SetMainMenuScreen() {
+  InitMenu(SetScreen);
+  currentScreen = MAINMENU;
+  glfwSetFramebufferSizeCallback(window, MM_resizeWindow);
+//  glfwSetCursorPosCallback(window, SE_mouseMove);
+  glfwSetKeyCallback(window, MM_keyCallback);
 }

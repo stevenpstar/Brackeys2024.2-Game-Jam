@@ -16,7 +16,7 @@ typedef struct P_CUBE {
   float posX;
   float posY;
   float posZ;
-  float vertices[180];
+  float vertices[216];
 } P_CUBE;
 
 // this is game specific but oh well
@@ -74,6 +74,7 @@ typedef struct P_CUBE_LIGHT {
 } P_CUBE_LIGHT;
 
 P_CUBE createCube(unsigned int VBO);
+void LoadCube(unsigned int VBO);
 void updateCubeVBO(unsigned int VBO, P_CUBE *cube);
 Wall createWall(unsigned int VBO);
 P_CUBE_LIGHT createCubeLight(unsigned int VBO, float x, float y, float z);
