@@ -1,4 +1,4 @@
-gcc -g -fmax-errors=1000 -o ^
+gcc -Wall -Wextra -g -fmax-errors=1000 -o ^
 ./build/main ^
 ./src/main.c ^
 ./src/glad.c ^

@@ -202,28 +202,28 @@ void InitGame() {
   // Character setup
   bardSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
-      "res/prototype_character.png", 
-      32, 32, 128, 384);
+      "res/bardchar.png", 
+      16, 16, 32, 32);
   bard.x = 8.f;
   bard.y = 1.f;
   bard.z = 8.f;
   bard.sprite = &bardSprite;
   bard.anim = &bardAnim;
   bard.state = 0;
-  bard.framerate = 8;
+  bard.framerate = 12;
   bard.frameTimer = 0.0f;
 
   rogueSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
-      "res/prototype_character.png", 
-      32, 32, 128, 384);
+      "res/roguechar.png", 
+      16, 16, 32, 32);
   rogue.x = 8.f;
   rogue.y = 1.f;
   rogue.z = 9.f;
   rogue.sprite = &rogueSprite;
   rogue.anim = &rogueAnim;
   rogue.state = 0;
-  rogue.framerate = 8;
+  rogue.framerate = 12;
   rogue.frameTimer = 0.0f;
 
   wizardSprite = createAnimatedSprite(VBO, VBO, 
@@ -334,6 +334,7 @@ void GameUpdate(float deltaTime) {
     mat4x4 model;
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, bard.x, bard.y, bard.z);
+    mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
     mat4x4_rotate_Y(model, model, degToRad(90.0f));
     unsigned int modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
@@ -346,6 +347,7 @@ void GameUpdate(float deltaTime) {
 
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, rogue.x, rogue.y, rogue.z);
+    mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
     mat4x4_rotate_Y(model, model, degToRad(90.0f));
     modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
@@ -379,12 +381,12 @@ void GameUpdate(float deltaTime) {
 
     glUseProgram(uiShader);
 
-    RenderString(VBO, uiShader, whiteTexture, -0.45f);
-    RenderString(VBO, uiShader, whiteTexture, -0.55f);
-    RenderString(VBO, uiShader, whiteTexture, -0.65f);
-    RenderString(VBO, uiShader, whiteTexture, -0.75f);
-    RenderString(VBO, uiShader, whiteTexture, -0.85f);
-    RenderString(VBO, uiShader, whiteTexture, -0.95f);
+    RenderString(VBO, uiShader, whiteTexture, -0.45f, windowWidth);
+    RenderString(VBO, uiShader, whiteTexture, -0.55f, windowWidth);
+    RenderString(VBO, uiShader, whiteTexture, -0.65f, windowWidth);
+    RenderString(VBO, uiShader, whiteTexture, -0.75f, windowWidth);
+    RenderString(VBO, uiShader, whiteTexture, -0.85f, windowWidth);
+    RenderString(VBO, uiShader, whiteTexture, -0.95f, windowWidth);
 
     renderNotes(aNotes,
         1024,

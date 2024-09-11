@@ -31,11 +31,19 @@ void renderNotes(ANote *notes,
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
   vec3 colour = {0.0f, 0.0f, 1.0f};
+  int maxPixelWidth = 1000;
+  if (maxPixelWidth > windowWidth) {
+    maxPixelWidth = windowWidth;
+  }
+  float stringWidth = 2.0f * ((float)maxPixelWidth / windowWidth);
+
   for (int i = 0; i < notePoolCount; i++) {
       if (notes[i].string < 0) {
         break;
       }
       position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
+//      position[0] = (((notes[i].time + stringWidth) - songTime) + 0.225f) * 1.f;
+     // position[0] = notes[i].time - songTime - 1.0f;
       position[1] = -0.35f - (0.1f * notes[i].string);
       if (songTime > notes[i].time + 1.0f && notes[i].active) {
         notes[i].active = false;

@@ -3,7 +3,14 @@
 #include "../engine/camera.h"
 #include "note.h"
 
-void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, float y) {
+void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, float y, int windowWidth) {
+  // testing
+  int maxPixelWidth = 4000;
+  if (maxPixelWidth > windowWidth) {
+    maxPixelWidth = windowWidth;
+  }
+  float stringWidth = 2.0f * ((float)maxPixelWidth / windowWidth);
+  //
   float data[30] = {
     -1.f, -0.005f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
      1.f, -0.005f, -0.0f,  1.f, 0.f, // bottom right
@@ -22,9 +29,19 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, f
     -0.8f, -0.1f, -0.0f,  0.f, 0.f, // bottom left duplicate     
   };
 
+  float testdata[30] = {
+    -0.5f, -0.5f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+     0.5f, -0.5f, -0.0f,  1.f, 0.f, // bottom right
+     0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right
+     0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+    -0.5f,  0.5f, -0.0f,  0.f, 1.f, // top left
+    -0.5f, -0.5f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+  };
+
+
   glUseProgram(shader);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(float), data, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(float), testdata, GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -32,6 +49,7 @@ void RenderString(unsigned int VBO, unsigned int shader, unsigned int texture, f
   mat4x4 model;
   mat4x4_identity(model);
   mat4x4_translate_in_place(model, 0.0f, y, 0.0f);
+  mat4x4_scale_aniso(model, model, stringWidth, 0.01f, 1.f);
   unsigned int modelLoc = glGetUniformLocation(shader, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
 
