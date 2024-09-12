@@ -25,6 +25,10 @@ unsigned int createWorld(int *tiles, const char *tilesFile, GLubyte *pixelData) 
     } 
     else if (r == 136 && g == 0 && b == 21) {
       tile = 1;
+    } else if (r == 0 && g == 100 && b == 0) {
+      tile = 35;
+    } else if (r == 0 && g == 0 && b == 100) {
+      tile = 41;
     }
     else {
       tile = 34;
@@ -177,7 +181,7 @@ void renderPlane(vec3 pos, vec3 rot, vec3 scale, unsigned int VBO, unsigned int 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned int texture, unsigned int textureTop, unsigned int VBO, unsigned int shader) {
+void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned int texture, unsigned int textureTop, unsigned int textureMid, unsigned int VBO, unsigned int shader) {
   for (int c=0;c<4;c++) {
     mat4x4_identity(model);
     if (c == 0) {
@@ -206,7 +210,7 @@ void renderWall(int tile, int row, int col, vec4 *model, vec4 *view, unsigned in
     mat4x4_translate_in_place(model, 0.0f, 1.f, 0.0f);
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, textureMid);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     mat4x4_translate_in_place(model, 0.0f, 1.f, 0.0f);

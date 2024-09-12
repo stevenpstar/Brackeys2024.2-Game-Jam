@@ -152,7 +152,9 @@ void SetScreen(int screen) {
 }
 
 void SetGameScreen() {
-  InitGame(selectedSongFile);
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  InitGame(selectedSongFile, width, height);
   SetupLighting();
   currentScreen = GAME;
   glfwSetFramebufferSizeCallback(window, resizeWindow);

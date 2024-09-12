@@ -16,7 +16,7 @@ void setTileData(int i, int tileSize, int texWidth, int texHeight, GLubyte pixel
 void getTileFromPosition(float x, float y, int *pos);
 void resetTileTexCoords(float data[48], unsigned int VBO);
 void renderTile(int tile, int row, int col, mat4x4 model, mat4x4 view, unsigned int texture, unsigned int VBO, unsigned int shader);
-void renderWall(int tile, int row, int col, mat4x4 model, mat4x4 view, unsigned int texture, unsigned int textureTop, unsigned int VBO, unsigned int shader);
+void renderWall(int tile, int row, int col, mat4x4 model, mat4x4 view, unsigned int texture, unsigned int textureTop, unsigned int textureMid, unsigned int VBO, unsigned int shader);
 void renderPlane(vec3 pos, vec3 rot, vec3 scale, unsigned int VBO, unsigned int texture, unsigned int shader);
 int getIndexFromTile(int x, int y, int mapWidth);
 #endif

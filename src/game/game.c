@@ -26,6 +26,8 @@
 #include "game.h"
 #include "key.h"
 
+#define CAMERA_COUNT 3
+
 //flags
 bool firstCamMove = false;
 bool stringOneDown = false;
@@ -36,6 +38,8 @@ bool stringFiveDown = false;
 bool stringSixDown = false;
 
 bool guitarRotateUp = true;
+
+bool songStarted = false;
 
 // globals
 ma_result result;
@@ -51,6 +55,20 @@ double mouseY;
 float dt;
 float songTime;
 GLubyte pixels[32*32*3] = {0};
+int cameraIndex = 0;
+int cameraMoveTicker = 0;
+int cameraMoveTime = 1200;
+vec3 cameraPositions[CAMERA_COUNT] = {
+  {10.f, 1.f, 9.0f},
+  {8.f, 0.2f, 8.0f},
+  {12.f, 5.f, 3.0f},
+};
+// yaw, pitch, roll (for whatever reason)
+vec3 cameraRotations[CAMERA_COUNT] = {
+  {197.f, -30.0f, 0.0f},
+  {180.f, 0.0f, 0.0f},
+  {135.f, -75.0f, 0.0f},
+};
 
 // Characters
 Sprite bardSprite;
@@ -97,7 +115,7 @@ Animation knightAnim = {
 unsigned int VBO;
 unsigned int VAO;
 unsigned int shader, lightingShader, uiShader;
-unsigned int tilesTexture, wallTexture, wallTextureTop, levelTexture, blackTexture, whiteTexture, treeTrunk;
+unsigned int tilesTexture, wallTexture, wallFlagTexture, levelTexture, blackTexture, whiteTexture;
 UISprite aKey, sKey, dKey, jKey, kKey, lKey;
 //shader locations
 unsigned int viewLoc;
@@ -140,12 +158,13 @@ vec3 lookAhead;
 //Text
 GLTtext *text;
 
-void InitGame(char selectedSong[512]) {
+void InitGame(char selectedSong[512], int w, int h) {
+ 
   gltInit();
   text = gltCreateText();
   result = ma_engine_init(NULL, &engine);
 
-  fireResult = ma_decoder_init_file("res/firesound.wav", NULL, &decoder);
+  fireResult = ma_decoder_init_file("res/thunderstorm.mp3", NULL, &decoder);
     if (result != MA_SUCCESS) {
       printf("fire result issue!\n");
         return;
@@ -165,6 +184,9 @@ void InitGame(char selectedSong[512]) {
       ma_decoder_uninit(&decoder);
       printf("MiniAudio failed to init decoder\n");
       return;
+  }
+  if (ma_device_set_master_volume(&device, 0.1f) != MA_SUCCESS) {
+    printf("Volume not set!\n");
   }
 
   if (ma_device_start(&device) != MA_SUCCESS) {
@@ -194,9 +216,9 @@ void InitGame(char selectedSong[512]) {
   // setup cameras
   vec3 target = {0.0f, 0.0f, 0.0f};
   vec3 pos = {0.0f, 0.0f, -7.0f};
-  vec3 fpsPos = {11.f, 2.5f, 8.0f};
-  cam = createCamera(pos, target, 2.5f, -90.0f, 0.0f);
-  fpsCam = createCamera(fpsPos, target, 2.5f, 180.0f, -35.0f);
+  vec3 fpsPos = {10.f, 1.f, 9.0f};
+  cam = createCamera(pos, target, 2.5f, -30.0f, 0.0f);
+  fpsCam = createCamera(fpsPos, target, 2.5f, 197.f, -30.0f);
   activeCamera = &fpsCam;
 
   shader = createShader("./src/shaders/vertex.vert", 
@@ -206,8 +228,8 @@ void InitGame(char selectedSong[512]) {
   uiShader = createShader("./src/shaders/ui.vert",
       "./src/shaders/ui.frag");
 
-  wallTexture = loadTextureRGB("res/forestwall16bottom.png");
-  wallTextureTop = loadTextureRGB("res/treetop.png");
+  wallTexture = loadTextureRGB("res/wallhue.png");
+  wallFlagTexture = loadTextureRGB("res/wallhueflag.png");
   vec3 aKeyPos = { -0.8f, -0.4f, -0.1f };
   vec3 sKeyPos = { -0.8f, -0.5f, -0.1f };
   vec3 dKeyPos = { -0.8f, -0.6f, -0.1f };
@@ -241,17 +263,15 @@ void InitGame(char selectedSong[512]) {
 
   blackTexture = loadTextureRGB("res/blacksq.png");
   whiteTexture = loadTextureRGB("res/whitesq.png");
-  treeTrunk = loadTextureRGB("res/treetrunk.png");
-
-  tilesTexture = createWorld(tiles, "res/foresttiles.png", pixels);
+  tilesTexture = createWorld(tiles, "res/floortiles.png", pixels);
 
   // Character setup
   bardSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
       "res/bardchar.png", 
       16, 16, 32, 32);
-  bard.x = 8.f;
-  bard.y = 1.f;
+  bard.x = 6.f;
+  bard.y = 0.25f;
   bard.z = 8.f;
   bard.sprite = &bardSprite;
   bard.anim = &bardAnim;
@@ -264,7 +284,7 @@ void InitGame(char selectedSong[512]) {
       "res/guitar16anim.png", 
       16, 16, 32, 16);
   guitar.x = 8.f;
-  guitar.y = 1.f;
+  guitar.y = 0.25f;
   guitar.z = 8.f;
   guitar.sprite = &guitarSprite;
   guitar.anim = &guitarAnim;
@@ -277,7 +297,7 @@ void InitGame(char selectedSong[512]) {
       "res/roguechar.png", 
       16, 16, 32, 32);
   rogue.x = 8.f;
-  rogue.y = 1.f;
+  rogue.y = 0.25f;
   rogue.z = 9.f;
   rogue.sprite = &rogueSprite;
   rogue.anim = &rogueAnim;
@@ -290,7 +310,7 @@ void InitGame(char selectedSong[512]) {
       "res/wizardchar.png", 
       16, 16, 32, 32);
   wizard.x = 8.f;
-  wizard.y = 1.f;
+  wizard.y = 0.25f;
   wizard.z = 7.f;
   wizard.sprite = &wizardSprite;
   wizard.anim = &wizardAnim;
@@ -300,15 +320,15 @@ void InitGame(char selectedSong[512]) {
 
   knightSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
-      "res/prototype_character.png", 
-      32, 32, 128, 384);
+      "res/knightchar.png", 
+      16, 16, 32, 32);
   knight.x = 9.f;
-  knight.y = 1.f;
+  knight.y = 0.25f;
   knight.z = 8.f;
   knight.sprite = &knightSprite;
   knight.anim = &knightAnim;
   knight.state = 0;
-  knight.framerate = 8;
+  knight.framerate = 12;
   knight.frameTimer = 0.0f;
 
   note = (Note){
@@ -331,17 +351,25 @@ void InitGame(char selectedSong[512]) {
   strcpy(songFile, "res/songs/");
   strcat(songFile, selectedSong);
   strcat(songFile, ".txt");
-  printf("songFile %s\n", songFile);
-//  printf("file length %d\n", strlen(songFile));
   readSong(songFile, aNotes, &totalScore);
   resetSong();
+  // resize viewport on load
+  glViewport(0, 0, w, h);
+  gltViewport(w, h);
+  windowWidth = w;
+  windowHeight = h;
+  glUseProgram(shader);
+  setProjection(shader, "proj", activeCamera, true, windowWidth, windowHeight);
+  glUseProgram(lightingShader);
+  setProjection(lightingShader, "proj", activeCamera, true, windowWidth, windowHeight);
+  glUseProgram(shader);
 }
 
 void SetupLighting() {
-  lightCubes[0] = createCubeLight(VBO, 0.0f, 0.5f, 1.0f);
-  lightCubes[1] = createCubeLight(VBO, 2.0f, 0.5f, 1.0f);
+  lightCubes[0] = createCubeLight(VBO, 6.0f, 0.5f, 11.0f);
+  lightCubes[1] = createCubeLight(VBO, 1.0f, 0.5f, 11.0f);
   lightCubes[2] = createCubeLight(VBO, 10.0f, 0.5f, 11.0f);
-  lightCubes[3] = createCubeLight(VBO, 24.0f, 0.5f, 24.0f);
+  lightCubes[3] = createCubeLight(VBO, 10.0f, 0.5f, 4.0f);
 
   vec3 lDir = {-0.2f, -1.0f, -0.3f};
   vec3 lAmb = {0.1f, 0.1f, 0.1f};
@@ -350,25 +378,35 @@ void SetupLighting() {
   for (int i = 0; i < 4; i++) {
     vec3 lPos = { lightCubes[i].posX, lightCubes[i].posY, lightCubes[i].posZ };
     vec3 diff;
-    if (i == 2) {
+    if (i == 0) {
+      vec3 diff = {0.0f, 0.0f, 1.f};
+      setPointLight(i, lPos, diff, shader);
+    } else if (i == 1) {
+      vec3 diff = {0.0f, 1.0f, 0.f};
+      setPointLight(i, lPos, diff, shader);
+    }
+    else if (i == 2) {
       vec3 diff = { 1.f, 0.0f, 0.0f };
       setPointLight(i, lPos, diff, shader);
     }
     else {
-      vec3 diff = { 0.2f, 0.2f, 0.2f };
+      vec3 diff = { 0.1f, 0.2f, 0.1f };
       setPointLight(i, lPos, diff, shader);
     }
   }
 }
 void GameUpdate(float deltaTime) {
     dt = deltaTime;
-    songTime += deltaTime;
+    if (songStarted) {
+      songTime += deltaTime;
+    }
     glBindVertexArray(VAO);
     glBindBuffer(GL_VERTEX_ARRAY, VBO);
     glUseProgram(shader);
     glUniform3fv(glGetUniformLocation(shader, "viewPos"), 1, activeCamera->position);
 
-    processCameraMovement(activeCamera, &inputs, true, up);
+    //processCameraMovement(activeCamera, &inputs, true, up);
+    moveCamera();
 
     // camera
     vec3_add(lookAhead, activeCamera->position, activeCamera->direction);
@@ -386,19 +424,17 @@ void GameUpdate(float deltaTime) {
       setTileData(tiles[i], 16, 112, 112, pixels, planeData, VBO);
       mat4x4 tile;
       mat4x4_identity(tile);
-      if (tiles[i] != 34) {
+      if (tiles[i] != 34 && tiles[i] != 41) {
         renderTile(tiles[i], row, col, tile, view, tilesTexture, VBO, shader);
       } else {
         resetTileTexCoords(planeData, VBO);
-        renderWall(tiles[i], row, col, tile, view, wallTexture, blackTexture, VBO, shader);
-     }
+       if (tiles[i] == 34) {
+         renderWall(tiles[i], row, col, tile, view, wallTexture, blackTexture, wallTexture, VBO, shader);
+       } else {
+         renderWall(tiles[i], row, col, tile, view, wallTexture, blackTexture, wallFlagTexture,VBO, shader);
+       }
+      }
     }
-
-    // render trees
-   // vec3 treePos = { bard.x - 3.0f, bard.y + 2.f, bard.z - 2.0f };
-   // vec3 treeRot = { 0.0f, 1.0f, 0.0f };
-   // vec3 treeScale = { 2.0f, 6.0f, 1.0f };
-   // renderPlane(treePos, treeRot, treeScale, VBO, treeTestTexture, shader);
 
     // render characters
     glUseProgram(shader);
@@ -413,7 +449,6 @@ void GameUpdate(float deltaTime) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, bardSprite.texture);
     Animate(&bard, bardAnim, true, deltaTime, VBO);
-   // SetFrame(&bardSprite, 0, VBO, false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     mat4x4_identity(model);
@@ -436,7 +471,7 @@ void GameUpdate(float deltaTime) {
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, rogue.x, rogue.y, rogue.z);
     mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
-    mat4x4_rotate_Y(model, model, degToRad(-25.0f));
+    mat4x4_rotate_Y(model, model, degToRad(90.f));
     modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
     glUniform3f(glGetUniformLocation(shader, "col"), 1.0f, 1.0f, 1.0f);
@@ -459,6 +494,7 @@ void GameUpdate(float deltaTime) {
 
     mat4x4_identity(model);
     mat4x4_translate_in_place(model, knight.x, knight.y, knight.z);
+    mat4x4_scale_aniso(model, model, 0.5f, 0.5f, 0.5f);
     mat4x4_rotate_Y(model, model, degToRad(90.0f));
     modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
@@ -533,9 +569,11 @@ void GameUpdate(float deltaTime) {
     gltBeginDraw();
     char str[128];
 
-  //  gltSetText(text, "Score: ");
-  //  gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-  //  gltDrawText2D(text, 0.5f, 0.5f, 4.0f);
+    if (!songStarted) {
+      gltSetText(text, "Hit Space to start/stop playback!");
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2, 4.0f, GLT_CENTER, GLT_TOP);
+    }
 
     gltSetText(text, itoa(currentScore, str, 10));
     gltColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -548,6 +586,32 @@ void GameUpdate(float deltaTime) {
     gltSetText(text, itoa(totalScore, str, 10));
     gltColor(1.0f, 1.0f, 1.0f, 1.0f);
     gltDrawText2D(text, 120.f, 0.5f, 4.0f);
+
+    // TODO: Remove this later, this is for camera position debugging
+ //   gltSetText(text, itoa(activeCamera->position[0], str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 0.5f, 2.0f);
+
+ //   gltSetText(text, itoa(activeCamera->position[1], str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 80.f, 2.0f);
+
+ //   gltSetText(text, itoa(activeCamera->position[2], str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 120.f, 2.0f);
+
+ //   gltSetText(text, itoa(activeCamera->pitch, str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 160.f, 2.0f);
+
+ //   gltSetText(text, itoa(activeCamera->yaw, str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 200.f, 2.0f);
+
+ //   gltSetText(text, itoa(activeCamera->roll, str, 10));
+ //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+ //   gltDrawText2D(text, 520.f, 240.f, 2.0f);
+
 
     gltEndDraw();
 }
@@ -575,7 +639,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos) {
   mouseX = xpos;
   mouseY = ypos;
 
-  mouseLook(xoffset, yoffset, activeCamera, dt);
+//  mouseLook(xoffset, yoffset, activeCamera, dt);
 }
 
 void setNextNote(int string) {
@@ -607,6 +671,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
   }
   if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
     resetSong();
+  }
+  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    songStarted = !songStarted;
+    if (!songStarted) {
+      resetSong();
+    }
   }
   if (key == GLFW_KEY_A && action == GLFW_PRESS) {
     if (mods == 1) {
@@ -780,6 +850,29 @@ void playString(int string, const char *noteFile, bool octave) {
     aNotes[nextNoteIndex[string-1]].active = false;
   }
   setNextNote(string);
+}
+
+void moveCamera() {
+  float speed = 0.0002f;
+  vec3 camFront = {0.0f, 0.0f, -1.0f};
+  vec3 nFront;
+  vec3_scale(nFront, activeCamera->direction, speed);
+  vec3_add(activeCamera->position, activeCamera->position, nFront);
+  cameraMoveTicker++;
+  if (cameraMoveTicker > cameraMoveTime) {
+    cameraMoveTicker = 0;
+    if (cameraIndex < CAMERA_COUNT - 1) {
+      cameraIndex++;
+    } else {
+      cameraIndex = 0;
+    }
+    activeCamera->position[0] = cameraPositions[cameraIndex][0];
+    activeCamera->position[1] = cameraPositions[cameraIndex][1];
+    activeCamera->position[2] = cameraPositions[cameraIndex][2];
+    activeCamera->yaw = cameraRotations[cameraIndex][0];
+    activeCamera->pitch = cameraRotations[cameraIndex][1];
+    setDirection(activeCamera);
+  }
 }
 
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
