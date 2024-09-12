@@ -140,7 +140,7 @@ vec3 lookAhead;
 //Text
 GLTtext *text;
 
-void InitGame() {
+void InitGame(char selectedSong[512]) {
   gltInit();
   text = gltCreateText();
   result = ma_engine_init(NULL, &engine);
@@ -325,8 +325,15 @@ void InitGame() {
     .time = 1.0f,
   };
 
-  // Testing song loading
-  readSong("res/songs/song1.txt", aNotes, &totalScore);
+  // load song data
+  // If song directory + name is over 2000 characters I dunno what to tell you.
+  char songFile[2000];
+  strcpy(songFile, "res/songs/");
+  strcat(songFile, selectedSong);
+  strcat(songFile, ".txt");
+  printf("songFile %s\n", songFile);
+//  printf("file length %d\n", strlen(songFile));
+  readSong(songFile, aNotes, &totalScore);
   resetSong();
 }
 

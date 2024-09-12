@@ -11,7 +11,7 @@ void resizeWindow(GLFWwindow* window, int width, int height);
 
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 
-void InitGame();
+void InitGame(char selectedSong[512]);
 void SetupLighting();
 void GameUpdate(float deltaTime);
 void DeleteBuffers();

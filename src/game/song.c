@@ -5,6 +5,7 @@
 // max notes is 1024 for now
 void readSong(const char *filePath, ANote *aNotes, int *totalScore) {
   FILE *fp;
+  printf("File path: %s\n", filePath);
   fp = fopen(filePath, "r");
   char s[1024];
   int noteCount = 0; // note count
