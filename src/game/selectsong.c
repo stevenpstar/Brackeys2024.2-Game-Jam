@@ -68,7 +68,7 @@ void SM_resizeWindow(GLFWwindow* window, int width, int height) {
   SM_height = height;
 }
 
-void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512])) {
+void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512]), int w, int h) {
   songCount = GetSongCount();
   selectedSong = 0;
   pages = floor((float)songCount / 8);
@@ -79,6 +79,11 @@ void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512])) 
   SMSetScreen = SetScreen;
   SMSetSong = SetSelectedSong;
   SetSongList(songList);
+  glViewport(0, 0, w, h);
+  gltViewport(w, h);
+  SM_width = w;
+  SM_height = h;
+
 }
 void UpdateSelectSong(float deltaTime) {
   gltBeginDraw();

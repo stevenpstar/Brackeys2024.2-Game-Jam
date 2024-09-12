@@ -7,7 +7,12 @@ void renderNotes(ANote *notes,
     float songTime,
     unsigned int VBO,
     unsigned int shader,
-    unsigned int texture,
+    unsigned int blueTex,
+    unsigned int blueOctTex,
+    unsigned int redTex,
+    unsigned int redOctTex,
+    unsigned int greenTex,
+    unsigned int greenOctTex,
     int *nextNoteIndex,
     void (*setNextNote)(int),
     int windowWidth,
@@ -30,7 +35,7 @@ void renderNotes(ANote *notes,
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-  vec3 colour = {0.0f, 0.0f, 1.0f};
+  vec3 colour = {1.0f, 1.0f, 1.0f};
   int maxPixelWidth = 1000;
   if (maxPixelWidth > windowWidth) {
     maxPixelWidth = windowWidth;
@@ -42,8 +47,6 @@ void renderNotes(ANote *notes,
         break;
       }
       position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
-//      position[0] = (((notes[i].time + stringWidth) - songTime) + 0.225f) * 1.f;
-     // position[0] = notes[i].time - songTime - 1.0f;
       position[1] = -0.35f - (0.1f * notes[i].string);
       if (songTime > notes[i].time + 1.0f && notes[i].active) {
         notes[i].active = false;
@@ -56,14 +59,20 @@ void renderNotes(ANote *notes,
       mat4x4 model;
       mat4x4_identity(model);
       mat4x4_translate_in_place(model, position[0], position[1], -0.1f);
-      mat4x4_scale_aniso(model, model, 0.05f * (float)windowHeight/(float)windowWidth,
-          0.05f, 1.f);
+      mat4x4_scale_aniso(model, model, 0.1f * (float)windowHeight/(float)windowWidth,
+          0.1f, 1.f);
       unsigned int modelLoc = glGetUniformLocation(shader, "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
       glUniform3f(glGetUniformLocation(shader, "col"), notes[i].colour[0], notes[i].colour[1], notes[i].colour[2]);
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture);
+      if (notes[i].string == 1 || notes[i].string == 4) {
+        glBindTexture(GL_TEXTURE_2D, blueOctTex);
+      } else if (notes[i].string == 2 || notes[i].string == 5) {
+        glBindTexture(GL_TEXTURE_2D, greenTex);
+      } else if (notes[i].string == 3 || notes[i].string == 6) {
+        glBindTexture(GL_TEXTURE_2D, redTex);
+      }
       glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 }

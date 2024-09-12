@@ -35,6 +35,7 @@ void SetSongEditorScreen();
 void SetMainMenuScreen();
 
 int main(void) {
+  strcpy(selectedSongFile, "song1");
   srand(time(NULL));
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -61,7 +62,7 @@ int main(void) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glViewport(0, 0, 800, 600);
 
-  SetScreen(SONGSELECT);
+  SetScreen(GAME);
 
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -154,7 +155,7 @@ void SetScreen(int screen) {
 void SetGameScreen() {
   int width, height;
   glfwGetWindowSize(window, &width, &height);
-  InitGame(selectedSongFile, width, height);
+  InitGame(SetScreen, selectedSongFile, width, height);
   SetupLighting();
   currentScreen = GAME;
   glfwSetFramebufferSizeCallback(window, resizeWindow);
@@ -172,7 +173,9 @@ void SetSongEditorScreen() {
 }
 
 void SetMainMenuScreen() {
-  InitMenu(SetScreen);
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  InitMenu(SetScreen, width, height);
   currentScreen = MAINMENU;
   glfwSetFramebufferSizeCallback(window, MM_resizeWindow);
 //  glfwSetCursorPosCallback(window, SE_mouseMove);
@@ -180,7 +183,9 @@ void SetMainMenuScreen() {
 }
 
 void SetSongSelectScreen() {
-  InitSelectSong(SetScreen, SetSelectedSong);
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  InitSelectSong(SetScreen, SetSelectedSong, width, height);
   currentScreen = SONGSELECT;
   glfwSetFramebufferSizeCallback(window, SM_resizeWindow);
 //  glfwSetCursorPosCallback(window, SE_mouseMove);

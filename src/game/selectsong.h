@@ -6,7 +6,7 @@ void SM_keyCallback(GLFWwindow *window, int key, int scancode, int action, int m
 void SM_mouseMove(GLFWwindow* window, double xpos, double ypos);
 void SM_resizeWindow(GLFWwindow* window, int width, int height);
 
-void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512]));
+void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512]), int w, int h);
 void UpdateSelectSong(float deltaTime);
 void CleanUpSelectSong();
 void SetSongList(char songs[8][512]);

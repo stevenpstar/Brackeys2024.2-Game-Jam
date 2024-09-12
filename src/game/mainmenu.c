@@ -8,6 +8,9 @@
 // game
 #include "mainmenu.h"
 
+int MM_windowWidth;
+int MM_windowHeight;
+
 GLTtext *MM_text;
 int selectedButton = 0;
 void (*MMSetScreen)(int);
@@ -21,7 +24,7 @@ void MM_keyCallback(GLFWwindow *window, int key, int scancode, int action, int m
   }
   if (key == GLFW_KEY_ENTER && action == GLFW_PRESS || key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
     if (selectedButton == 0) {
-      MMSetScreen(2);
+      MMSetScreen(3);
     } else if (selectedButton == 1) {
       glfwSetWindowShouldClose(window, true);
     }
@@ -33,10 +36,14 @@ void MM_resizeWindow(GLFWwindow* window, int width, int height) {
   gltViewport(width, height);
 }
 
-void InitMenu(void (*SetScreen)(int)) {
+void InitMenu(void (*SetScreen)(int), int w, int h) {
   gltInit();
   MM_text = gltCreateText();
   MMSetScreen = SetScreen;
+  glViewport(0, 0, w, h);
+  gltViewport(w, h);
+  MM_windowWidth = w;
+  MM_windowHeight = h;
 }
 
 void UpdateMainMenu(float deltaTime) {

@@ -40,6 +40,13 @@ bool stringSixDown = false;
 bool guitarRotateUp = true;
 
 bool songStarted = false;
+bool songEnded = false;
+bool menuOpen = true;
+
+void (*GameSetScreen)(int);
+
+// menu vars
+int selMenuIndex = 0;
 
 // globals
 ma_result result;
@@ -116,6 +123,11 @@ unsigned int VBO;
 unsigned int VAO;
 unsigned int shader, lightingShader, uiShader;
 unsigned int tilesTexture, wallTexture, wallFlagTexture, levelTexture, blackTexture, whiteTexture;
+// note textures
+unsigned int blueNoteTex, blueNoteOctTex;
+unsigned int greenNoteTex, greenNoteOctTex;
+unsigned int redNoteTex, redNoteOctTex;
+
 UISprite aKey, sKey, dKey, jKey, kKey, lKey;
 //shader locations
 unsigned int viewLoc;
@@ -158,8 +170,8 @@ vec3 lookAhead;
 //Text
 GLTtext *text;
 
-void InitGame(char selectedSong[512], int w, int h) {
- 
+void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
+  GameSetScreen = SetScreen;
   gltInit();
   text = gltCreateText();
   result = ma_engine_init(NULL, &engine);
@@ -265,6 +277,13 @@ void InitGame(char selectedSong[512], int w, int h) {
   whiteTexture = loadTextureRGB("res/whitesq.png");
   tilesTexture = createWorld(tiles, "res/floortiles.png", pixels);
 
+  blueNoteTex = loadTextureRGB("res/notebnorm.png");
+  blueNoteOctTex = loadTextureRGB("res/noteboctave.png");
+  greenNoteTex = loadTextureRGB("res/notegnorm.png");
+  greenNoteOctTex = loadTextureRGB("res/notegoctave.png");
+  redNoteTex = loadTextureRGB("res/noternorm.png");
+  redNoteOctTex = loadTextureRGB("res/noteroctave.png");
+
   // Character setup
   bardSprite = createAnimatedSprite(VBO, VBO, 
       12.f, 12.f, 12.f, 
@@ -366,10 +385,10 @@ void InitGame(char selectedSong[512], int w, int h) {
 }
 
 void SetupLighting() {
-  lightCubes[0] = createCubeLight(VBO, 6.0f, 0.5f, 11.0f);
-  lightCubes[1] = createCubeLight(VBO, 1.0f, 0.5f, 11.0f);
-  lightCubes[2] = createCubeLight(VBO, 10.0f, 0.5f, 11.0f);
-  lightCubes[3] = createCubeLight(VBO, 10.0f, 0.5f, 4.0f);
+  lightCubes[0] = createCubeLight(VBO, 6.0f, 1.5f, 11.0f);
+  lightCubes[1] = createCubeLight(VBO, 1.0f, 1.5f, 11.0f);
+  lightCubes[2] = createCubeLight(VBO, 10.0f, 1.5f, 11.0f);
+  lightCubes[3] = createCubeLight(VBO, 10.0f, 1.5f, 4.0f);
 
   vec3 lDir = {-0.2f, -1.0f, -0.3f};
   vec3 lAmb = {0.1f, 0.1f, 0.1f};
@@ -505,115 +524,142 @@ void GameUpdate(float deltaTime) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glUseProgram(uiShader);
+    if (!menuOpen) {
+      RenderString(VBO, uiShader, whiteTexture, -0.45f, windowWidth);
+      RenderString(VBO, uiShader, whiteTexture, -0.55f, windowWidth);
+      RenderString(VBO, uiShader, whiteTexture, -0.65f, windowWidth);
+      RenderString(VBO, uiShader, whiteTexture, -0.75f, windowWidth);
+      RenderString(VBO, uiShader, whiteTexture, -0.85f, windowWidth);
+      RenderString(VBO, uiShader, whiteTexture, -0.95f, windowWidth);
 
-    RenderString(VBO, uiShader, whiteTexture, -0.45f, windowWidth);
-    RenderString(VBO, uiShader, whiteTexture, -0.55f, windowWidth);
-    RenderString(VBO, uiShader, whiteTexture, -0.65f, windowWidth);
-    RenderString(VBO, uiShader, whiteTexture, -0.75f, windowWidth);
-    RenderString(VBO, uiShader, whiteTexture, -0.85f, windowWidth);
-    RenderString(VBO, uiShader, whiteTexture, -0.95f, windowWidth);
+      renderNotes(aNotes,
+          1024,
+          songTime,
+          VBO,
+          uiShader,
+          blueNoteTex,
+          blueNoteOctTex,
+          redNoteTex,
+          redNoteOctTex,
+          greenNoteTex,
+          greenNoteOctTex,
+          nextNoteIndex,
+          setNextNote,
+          windowWidth,
+          windowHeight);
 
-    renderNotes(aNotes,
-        1024,
-        songTime,
-        VBO,
-        uiShader,
-        whiteTexture,
-        nextNoteIndex,
-        setNextNote,
-        windowWidth,
-        windowHeight);
-
-    renderKey(&aKey,
-        stringOneDown,
-        VBO,
-        aKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
-    renderKey(&sKey,
-        stringTwoDown,
-        VBO,
-        sKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
-    renderKey(&dKey,
-        stringThreeDown,
-        VBO,
-        dKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
-    renderKey(&jKey,
-        stringFourDown,
-        VBO,
-        jKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
-    renderKey(&kKey,
-        stringFiveDown,
-        VBO,
-        kKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
-    renderKey(&lKey,
-        stringSixDown,
-        VBO,
-        lKey.texture,
-        uiShader,
-        windowWidth,
-        windowHeight);
+      renderKey(&aKey,
+          stringOneDown,
+          VBO,
+          aKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+      renderKey(&sKey,
+          stringTwoDown,
+          VBO,
+          sKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+      renderKey(&dKey,
+          stringThreeDown,
+          VBO,
+          dKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+      renderKey(&jKey,
+          stringFourDown,
+          VBO,
+          jKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+      renderKey(&kKey,
+          stringFiveDown,
+          VBO,
+          kKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+      renderKey(&lKey,
+          stringSixDown,
+          VBO,
+          lKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight);
+    }
     gltBeginDraw();
     char str[128];
 
-    if (!songStarted) {
+    if (!songStarted && !menuOpen) {
       gltSetText(text, "Hit Space to start/stop playback!");
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2, 4.0f, GLT_CENTER, GLT_TOP);
+    
+      gltSetText(text, itoa(currentScore, str, 10));
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2D(text, 10.f, 0.5f, 4.0f);
+
+      gltSetText(text, "/");
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2D(text, 80.f, 0.5f, 4.0f);
+
+      gltSetText(text, itoa(totalScore, str, 10));
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2D(text, 120.f, 0.5f, 4.0f);
+    }
+    if (menuOpen) {
+      gltSetText(text, "Start");
+      if (selMenuIndex == 0) {
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        gltColor(0.5f, 0.5f, 0.5f, 1.0f);
+      }
+      gltDrawText2D(text, 120.f, 120.f, 4.0f);
+
+      gltSetText(text, "Select Song");
+      if (selMenuIndex == 1) {
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        gltColor(0.5f, 0.5f, 0.5f, 1.0f);
+      }
+      gltDrawText2D(text, 120.f, 200.f, 4.0f);
+
+      gltSetText(text, "How to play");
+      if (selMenuIndex == 2) {
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        gltColor(0.5f, 0.5f, 0.5f, 1.0f);
+      }
+      gltDrawText2D(text, 120.f, 280.f, 4.0f);
+
+      gltSetText(text, "Options");
+      if (selMenuIndex == 3) {
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        gltColor(0.5f, 0.5f, 0.5f, 1.0f);
+      }
+      gltDrawText2D(text, 120.f, 360.f, 4.0f);
+
+      gltSetText(text, "Exit");
+      if (selMenuIndex == 4) {
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        gltColor(0.5f, 0.5f, 0.5f, 1.0f);
+      }
+      gltDrawText2D(text, 120.f, 440.f, 4.0f);
     }
 
-    gltSetText(text, itoa(currentScore, str, 10));
-    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-    gltDrawText2D(text, 10.f, 0.5f, 4.0f);
-
-    gltSetText(text, "/");
-    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-    gltDrawText2D(text, 80.f, 0.5f, 4.0f);
-
-    gltSetText(text, itoa(totalScore, str, 10));
-    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-    gltDrawText2D(text, 120.f, 0.5f, 4.0f);
-
-    // TODO: Remove this later, this is for camera position debugging
- //   gltSetText(text, itoa(activeCamera->position[0], str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 0.5f, 2.0f);
-
- //   gltSetText(text, itoa(activeCamera->position[1], str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 80.f, 2.0f);
-
- //   gltSetText(text, itoa(activeCamera->position[2], str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 120.f, 2.0f);
-
- //   gltSetText(text, itoa(activeCamera->pitch, str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 160.f, 2.0f);
-
- //   gltSetText(text, itoa(activeCamera->yaw, str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 200.f, 2.0f);
-
- //   gltSetText(text, itoa(activeCamera->roll, str, 10));
- //   gltColor(1.0f, 1.0f, 1.0f, 1.0f);
- //   gltDrawText2D(text, 520.f, 240.f, 2.0f);
-
-
     gltEndDraw();
+    // testing menu
+  //  vec3 mp = {0.0f, 0.0f, -0.2f};
+  //  vec3 mr = {0.0f, 0.0f, 0.0f};
+  //  vec3 sc = {1.0f, 1.0f, 1.0f};
+  //  renderPlane(mp, mr, sc, VBO, blackTexture, uiShader);
+
 }
 
 void DeleteBuffers() {
@@ -651,28 +697,22 @@ void setNextNote(int string) {
     if (aNotes[i].string == string && aNotes[i].active) {
       nextNote = &aNotes[i];
       nextNoteIndex[string-1] = i;
-      aNotes[i].colour[0] = 0.0f;
-      aNotes[i].colour[1] = 0.0f;
-      aNotes[i].colour[2] = 1.0f;
       return;
-    } else if (aNotes[i].string == string && aNotes[i].active && i > nextNoteIndex[string-1]) {
-      // set to neutral colour
-      aNotes[i].colour[0] = 0.0f;
-      aNotes[i].colour[1] = 0.0f;
-      aNotes[i].colour[2] = 0.0f;
-    }
-  }
+    } 
+ }
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   bool guitarAngleChange = false;
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, true);
-  }
-  if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+    songStarted = false;
     resetSong();
+    menuOpen = true;
   }
-  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+//  if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+//    resetSong();
+//  }
+  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !menuOpen) {
     songStarted = !songStarted;
     if (!songStarted) {
       resetSong();
@@ -793,6 +833,41 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
   } else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
     inputs.right.Down = false;
   }
+
+  // menu interactions here
+  if (menuOpen) {
+    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+      if (selMenuIndex < 4) {
+        selMenuIndex++;
+      }
+    }
+    if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+      if (selMenuIndex > 0) {
+        selMenuIndex--;
+      }
+    }
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS ||
+        key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+      switch (selMenuIndex) {
+        case 0:
+          // start
+          menuOpen = false;
+          break;
+        case 1:
+          GameSetScreen(3);
+          break;
+        case 2:
+          // how to play
+          break;
+        case 3:
+          // options
+          break;
+        case 4:
+          glfwSetWindowShouldClose(window, true);
+          break;
+      };
+    }
+  }
 }
 
 void resizeWindow(GLFWwindow* window, int width, int height) {
@@ -813,9 +888,9 @@ void resetSong() {
   // reset all notes
   for (int i = 0; i < 1024; i++) {
     aNotes[i].active = true;
-    aNotes[i].colour[0] = 0.0f;
-    aNotes[i].colour[1] = 0.0f;
-    aNotes[i].colour[2] = 0.0f;
+    aNotes[i].colour[0] = 1.0f;
+    aNotes[i].colour[1] = 1.0f;
+    aNotes[i].colour[2] = 1.0f;
   }
   inputTimes[0] = 0.0f;
   inputTimes[1] = 0.0f;
@@ -839,21 +914,15 @@ void playString(int string, const char *noteFile, bool octave) {
   float difference = fabsf(inputTimes[string-1] - 1.0f);
   if (difference < 0.2) {
     currentScore += 2;
-    aNotes[nextNoteIndex[string-1]].colour[0] = 0.0f;
-    aNotes[nextNoteIndex[string-1]].colour[1] = 1.0f;
-    aNotes[nextNoteIndex[string-1]].colour[2] = 0.0f;
     aNotes[nextNoteIndex[string-1]].active = false;
   } else {
-    aNotes[nextNoteIndex[string-1]].colour[0] = 1.0f;
-    aNotes[nextNoteIndex[string-1]].colour[1] = 0.0f;
-    aNotes[nextNoteIndex[string-1]].colour[2] = 0.0f;
     aNotes[nextNoteIndex[string-1]].active = false;
   }
   setNextNote(string);
 }
 
 void moveCamera() {
-  float speed = 0.0002f;
+  float speed = 0.0003f;
   vec3 camFront = {0.0f, 0.0f, -1.0f};
   vec3 nFront;
   vec3_scale(nFront, activeCamera->direction, speed);
@@ -881,10 +950,7 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     if (pDecoder == NULL) {
         return;
     }
-
-    /* Reading PCM frames will loop based on what we specified when called ma_data_source_set_looping(). */
     ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
-
     (void)pInput;
 }
 
