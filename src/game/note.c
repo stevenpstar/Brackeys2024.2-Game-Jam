@@ -47,7 +47,7 @@ void renderNotes(ANote *notes,
       if (notes[i].string < 0) {
         break;
       }
-      position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
+      position[0] = ((notes[i].time - songTime) + 0.225f);
       position[1] = -0.35f - (0.1f * notes[i].string);
       if (position[0] < -1.f) {
         notes[i].render = false;

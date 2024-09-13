@@ -209,6 +209,8 @@ vec3 lookAhead;
 GLTtext *text;
 
 void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
+  // reset this when scene loads
+  selMenuIndex = 0;
   GameSetScreen = SetScreen;
   gltInit();
   text = gltCreateText();
@@ -526,7 +528,7 @@ void GameUpdate(float deltaTime) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     mat4x4_identity(model);
-    mat4x4_translate_in_place(model, bard.x + 0.1f, bard.y - 0.1f, bard.z);
+    mat4x4_translate_in_place(model, bard.x + 0.1f, bard.y - 0.05f, bard.z);
     mat4x4_scale_aniso(model, model, 0.25f, 0.35f, 0.35f);
     mat4x4_rotate_Y(model, model, degToRad(90.0f));
     if (guitarRotateUp) {
