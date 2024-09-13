@@ -102,3 +102,42 @@ void renderNotes(ANote *notes,
       glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 }
+
+void renderNote(vec2 position, bool octave, unsigned int VBO, unsigned int shader, unsigned int blueTex, unsigned int blueOctTex, int windowWidth, int windowHeight) {
+      float data[30] = {
+        -0.5f, -0.5f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
+         0.5f, -0.5f, -0.0f,  1.f, 0.f, // bottom right
+         0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right
+         0.5f,  0.5f, -0.0f,  1.f, 1.f, // top right duplicate (ignore and/or change to be same not sure)
+        -0.5f,  0.5f, -0.0f,  0.f, 1.f, // top left
+        -0.5f, -0.5f, -0.0f,  0.f, 0.f, // bottom left duplicate     
+      };
+
+      glUseProgram(shader);
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(float), data, GL_STATIC_DRAW);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+      glEnableVertexAttribArray(1);
+      vec3 colour = {1.0f, 1.0f, 1.0f};
+
+      float aRatio = (float)windowWidth/(float)windowHeight;
+      float hRatio = (float)windowHeight/(float)windowWidth;
+      mat4x4 model;
+      mat4x4_identity(model);
+      mat4x4_translate_in_place(model, position[0], position[1], -0.1f);
+      mat4x4_scale_aniso(model, model, 0.1f * (float)windowHeight/(float)windowWidth,
+          0.1f, 1.f);
+      unsigned int modelLoc = glGetUniformLocation(shader, "model");
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (GLfloat *)model);
+      glUniform3f(glGetUniformLocation(shader, "col"), colour[0], colour[1], colour[2]);
+
+      glActiveTexture(GL_TEXTURE0);
+      if (octave) {
+        glBindTexture(GL_TEXTURE_2D, blueOctTex);
+      } else {
+        glBindTexture(GL_TEXTURE_2D, blueTex);
+      }
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+}

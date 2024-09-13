@@ -37,4 +37,13 @@ void renderNotes(ANote notes[30],
     int windowWidth,
     int windowHeight,
     void (*setSongEnded)(void));
+void renderNote(
+    vec2 position,
+    bool octave,
+    unsigned int VBO,
+    unsigned int shader,
+    unsigned int blueTex,
+    unsigned int blueOctTex,
+    int windowWidth,
+    int windowHeight);
 #endif

@@ -36,6 +36,8 @@ bool stringThreeDown = false;
 bool stringFourDown = false;
 bool stringFiveDown = false;
 bool stringSixDown = false;
+bool escKeyDown = false;
+bool shiftDown = false;
 
 bool guitarRotateUp = true;
 
@@ -44,6 +46,7 @@ bool songEnded = false;
 bool menuOpen = true;
 bool showScore = false;
 bool fullScreen = true;
+bool showHowToPlay = false;
 
 void (*GameSetScreen)(int);
 
@@ -130,7 +133,7 @@ unsigned int blueNoteTex, blueNoteOctTex;
 unsigned int greenNoteTex, greenNoteOctTex;
 unsigned int redNoteTex, redNoteOctTex;
 unsigned int noteEffectTex;
-UISprite aKey, sKey, dKey, jKey, kKey, lKey, noteEffect;
+UISprite aKey, sKey, dKey, jKey, kKey, lKey, noteEffect, aKeyUI, shiftKey, shiftKeyUI, escKey;
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
@@ -245,7 +248,11 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
 
   wallTexture = loadTextureRGB("res/wallhue.png");
   wallFlagTexture = loadTextureRGB("res/wallhueflag.png");
+  vec3 escKeyPos = { -0.95, 0.95f, -0.1f};
+  vec3 shiftKeyPos = { -0.825f, -0.25f, -0.1f};
   vec3 aKeyPos = { -0.8f, -0.4f, -0.1f };
+  vec3 aKeyUIPos = { -0.325f, 0.04f, -0.1f };
+  vec3 shiftKeyUIPos = { -0.35f, -0.06f, -0.1f };
   vec3 sKeyPos = { -0.8f, -0.5f, -0.1f };
   vec3 dKeyPos = { -0.8f, -0.6f, -0.1f };
   vec3 jKeyPos = { -0.8f, -0.7f, -0.1f };
@@ -253,6 +260,10 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
   vec3 lKeyPos = { -0.8f, -0.9f, -0.1f };
   noteEffect = createAnimatedUI(VBO, aKeyPos,"res/noteEffect.png", 32, 32, 128, 32);
   aKey = createAnimatedUI(VBO, aKeyPos,"res/akey.png", 32, 32, 64, 32);
+  escKey = createAnimatedUI(VBO, escKeyPos,"res/esckey.png", 32, 32, 64, 32);
+  aKeyUI = createAnimatedUI(VBO, aKeyUIPos,"res/akey.png", 32, 32, 64, 32);
+  shiftKey = createAnimatedUI(VBO, shiftKeyPos,"res/shiftkey.png", 32, 32, 64, 32);
+  shiftKeyUI = createAnimatedUI(VBO, shiftKeyUIPos,"res/shiftkey.png", 32, 32, 64, 32);
   sKey = createAnimatedUI(VBO, sKeyPos,"res/skey.png", 32, 32, 64, 32);
   dKey = createAnimatedUI(VBO, dKeyPos,"res/dkey.png", 32, 32, 64, 32);
   jKey = createAnimatedUI(VBO, jKeyPos,"res/jkey.png", 32, 32, 64, 32);
@@ -555,53 +566,113 @@ void GameUpdate(float deltaTime) {
           windowHeight,
           setSongEnded);
 
+      renderKey(&shiftKey,
+          shiftDown,
+          VBO,
+          shiftKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.2f);
+
       renderKey(&aKey,
           stringOneDown,
           VBO,
           aKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
       renderKey(&sKey,
           stringTwoDown,
           VBO,
           sKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
       renderKey(&dKey,
           stringThreeDown,
           VBO,
           dKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
       renderKey(&jKey,
           stringFourDown,
           VBO,
           jKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
       renderKey(&kKey,
           stringFiveDown,
           VBO,
           kKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
       renderKey(&lKey,
           stringSixDown,
           VBO,
           lKey.texture,
           uiShader,
           windowWidth,
-          windowHeight);
+          windowHeight, 0.1f);
+
+      renderKey(&escKey,
+          escKeyDown,
+          VBO,
+          escKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
     }
       // rendering note effect on key
+      if (showHowToPlay && menuOpen) {
+        vec2 normPos = {-0.3f, 0.2f};
+        vec2 octavePos = {-0.3f, 0.1f};
+        renderNote(
+            normPos,
+            false,
+            VBO,
+            uiShader,
+            blueNoteTex,
+            blueNoteOctTex,
+            windowWidth,
+            windowHeight);
+
+        renderNote(
+            octavePos,
+            true,
+            VBO,
+            uiShader,
+            blueNoteTex,
+            blueNoteOctTex,
+            windowWidth,
+            windowHeight);
+        renderKey(&aKeyUI,
+            stringOneDown,
+            VBO,
+            aKey.texture,
+            uiShader,
+            windowWidth,
+            windowHeight, 0.1f);
+      renderKey(&shiftKeyUI,
+          shiftDown,
+          VBO,
+          shiftKeyUI.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.2f);
+      }
 
     gltBeginDraw();
     char str[128];
+ // This is all a mess but hey that's game jams
+    if (!menuOpen) {
+      gltSetText(text, "Open Menu");
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2DAligned(text, 150.f, 50.0f, 2.0f,
+          GLT_LEFT, GLT_TOP);
+    }
 
     if (!songStarted && !menuOpen) {
       if (showScore) {
@@ -730,15 +801,38 @@ void GameUpdate(float deltaTime) {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
       gltDrawText2D(text, 120.f, 640.f, 4.0f);
+
+      // how to play section
+      showHowToPlay = selMenuIndex == 2;
+      if (showHowToPlay && menuOpen) {
+        gltSetText(text, "A Knights Rest is a simple rhythm game.");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 300.0f, 2.0f, GLT_CENTER, GLT_TOP);
+
+        gltSetText(text, "Hit the corresponding key when the note reaches it.");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 250.0f, 2.0f, GLT_CENTER, GLT_TOP);
+
+        gltSetText(text, "A Blue Note (notes are colour coded)");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2 - 300.f, (float)windowHeight / 2 - 160.0f, 2.0f, GLT_LEFT, GLT_TOP);
+
+        gltSetText(text, "The arrow indicates the note is raised");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2 - 300.f, (float)windowHeight / 2 - 90.0f, 2.0f, GLT_LEFT, GLT_TOP);
+
+        gltSetText(text, "The blue A key (press when a note reaches it)");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2 - 300.f, (float)windowHeight / 2 - 20.0f, 2.0f, GLT_LEFT, GLT_TOP);
+
+        gltSetText(text, "Press shift to raise the next note(s) played");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2 - 300.f, (float)windowHeight / 2 + 50.0f, 2.0f, GLT_LEFT, GLT_TOP);
+
     }
 
     gltEndDraw();
-    // testing menu
-  //  vec3 mp = {0.0f, 0.0f, -0.2f};
-  //  vec3 mr = {0.0f, 0.0f, 0.0f};
-  //  vec3 sc = {1.0f, 1.0f, 1.0f};
-  //  renderPlane(mp, mr, sc, VBO, blackTexture, uiShader);
-
+  }
 }
 
 void DeleteBuffers() {
@@ -792,14 +886,18 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
       menuOpen = false;
     }
   }
-//  if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
-//    resetSong();
-//  }
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !menuOpen) {
     songStarted = !songStarted;
     if (!songStarted) {
       resetSong();
+    } else {
+      lastScore = 0;
     }
+  }
+  if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+    shiftDown = true;
+  } else if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
+    shiftDown = false;
   }
   if (key == GLFW_KEY_A && action == GLFW_PRESS) {
     if (mods == 1) {

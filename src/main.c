@@ -35,7 +35,7 @@ void SetSongEditorScreen();
 void SetMainMenuScreen();
 
 int main(void) {
-  strcpy(selectedSongFile, "song1");
+  strcpy(selectedSongFile, "A Knights Rest");
   srand(time(NULL));
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -72,7 +72,7 @@ int main(void) {
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.02f, 0.02f, 0.02f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     switch (currentScreen) {

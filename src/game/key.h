@@ -9,5 +9,6 @@ void renderKey(
     unsigned int texture,
     unsigned int shader,
     int windowWidth,
-    int windowHeight);
+    int windowHeight,
+    float xScale);
 #endif

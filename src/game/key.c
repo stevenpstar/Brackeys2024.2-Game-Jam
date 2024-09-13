@@ -6,14 +6,15 @@ void renderKey(UISprite *key,
     unsigned int VBO,
     unsigned int texture,
     unsigned int shader,
-    int windowWidth, int windowHeight) {
+    int windowWidth, int windowHeight,
+    float xScale) {
 
     mat4x4 model;
     mat4x4_identity(model);
     mat4x4_translate_in_place(model,
         key->posX + 0.025f,
         key->posY - 0.035f, -0.2f);
-    mat4x4_scale_aniso(model, model, 0.1f * (float)windowHeight/(float)windowWidth, 0.1f, 0.0f);
+    mat4x4_scale_aniso(model, model, xScale * (float)windowHeight/(float)windowWidth, 0.1f, 0.0f);
     key->currentFrame = flag ? 1 : 0;
     SetFrameUI(key, 0, VBO, false);
     unsigned int modelLoc = glGetUniformLocation(shader, "model");
