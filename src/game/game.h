@@ -19,4 +19,5 @@ void setNextNote(int string);
 void playString(int string, const char *noteFile, bool octave);
 void resetSong(void);
 void moveCamera(void);
+void setSongEnded();
 #endif

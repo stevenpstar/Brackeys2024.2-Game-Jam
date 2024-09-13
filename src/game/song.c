@@ -24,6 +24,7 @@ void readSong(const char *filePath, ANote *aNotes, int *totalScore) {
         aNotes[noteCount].colour[2] = 0.0f;
         aNotes[noteCount].active = true;
         aNotes[noteCount].render = true;
+        aNotes[noteCount].pointValue = 2;
         // TODO: This will need to be another strtok to get octave or not
       } 
       token = strtok(NULL, ",");

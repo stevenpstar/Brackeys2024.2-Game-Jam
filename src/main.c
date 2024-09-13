@@ -42,7 +42,10 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  window = glfwCreateWindow(800, 600, "A Knight's Rest", NULL, NULL);
+  window = glfwCreateWindow(
+           glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
+           glfwGetVideoMode(glfwGetPrimaryMonitor())->height,
+           "A Knight's Rest", glfwGetPrimaryMonitor(), NULL);
   if (window == NULL) {
     printf("GLFW Window creation failed\n");
     glfwTerminate();

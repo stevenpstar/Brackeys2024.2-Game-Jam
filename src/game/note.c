@@ -16,7 +16,8 @@ void renderNotes(ANote *notes,
     int *nextNoteIndex,
     void (*setNextNote)(int),
     int windowWidth,
-    int windowHeight) {
+    int windowHeight,
+    void (*setSongEnded)(void)) {
 
   float data[30] = {
     -0.5f, -0.5f, -0.0f,  0.f, 0.f,//0.0f, // bottom left
@@ -46,21 +47,26 @@ void renderNotes(ANote *notes,
       if (notes[i].string < 0) {
         break;
       }
+      position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
+      position[1] = -0.35f - (0.1f * notes[i].string);
+      if (position[0] < -1.f) {
+        notes[i].render = false;
+        // last note, or next note string is -1 (end of song)
+        if (i == 1023 || i < 1023 && notes[i+1].string == -1) {
+          setSongEnded();
+        }
+      }
       if (!notes[i].render) {
         continue;
       }
-      position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
-      position[1] = -0.35f - (0.1f * notes[i].string);
+
       if (songTime > notes[i].time + 1.0f + 0.2f && notes[i].active) {
         if (nextNoteIndex[notes[i].string-1] == i) {
           notes[i].active = false;
           setNextNote(notes[i].string);
         }
       } 
-      if (position[0] < -1.f) {
-        notes[i].render = false;
-      }
-
+      
       float aRatio = (float)windowWidth/(float)windowHeight;
       float hRatio = (float)windowHeight/(float)windowWidth;
       mat4x4 model;

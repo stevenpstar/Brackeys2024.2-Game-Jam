@@ -17,6 +17,7 @@ typedef struct ANote {
   bool active;
   bool render;
   bool octave;
+  int pointValue;
 } ANote;
 
 void initNote(Note *note, int string, float time, float duration);
@@ -34,5 +35,6 @@ void renderNotes(ANote notes[30],
     int nextNoteIndex[3],
     void (*setNextNote)(int),
     int windowWidth,
-    int windowHeight);
+    int windowHeight,
+    void (*setSongEnded)(void));
 #endif

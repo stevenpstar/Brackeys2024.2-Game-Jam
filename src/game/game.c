@@ -42,6 +42,8 @@ bool guitarRotateUp = true;
 bool songStarted = false;
 bool songEnded = false;
 bool menuOpen = true;
+bool showScore = false;
+bool fullScreen = true;
 
 void (*GameSetScreen)(int);
 
@@ -140,6 +142,7 @@ int nextNoteIndex[6] = {0};
 Note note;
 int totalScore = 0;
 int currentScore = 0;
+int lastScore = 0;
 
 Inputs inputs;
 int tiles[1024] = {0};
@@ -549,7 +552,8 @@ void GameUpdate(float deltaTime) {
           nextNoteIndex,
           setNextNote,
           windowWidth,
-          windowHeight);
+          windowHeight,
+          setSongEnded);
 
       renderKey(&aKey,
           stringOneDown,
@@ -600,6 +604,67 @@ void GameUpdate(float deltaTime) {
     char str[128];
 
     if (!songStarted && !menuOpen) {
+      if (showScore) {
+        gltSetText(text, "Score:");
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 450.0f, 4.0f, GLT_CENTER, GLT_TOP);
+
+        gltSetText(text, itoa(lastScore, str, 10));
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 350.0f, 5.0f, GLT_CENTER, GLT_TOP);
+        // letter grade
+        float perc = (float)lastScore / (float)totalScore;
+        float gradeScale = 10.0f;
+
+        if (perc == 1.0) {
+          gltSetText(text, "S");
+          gltColor(0.922f, 0.8f, 0.122f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } else if (perc > 0.95f) {
+          gltSetText(text, "A+");
+          gltColor(0.122f, 0.627f, 0.922f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.9f) {
+          gltSetText(text, "A");
+          gltColor(0.122f, 0.627f, 0.922f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.85f) {
+          gltSetText(text, "B+");
+          gltColor(0.122f, 0.922f, 0.435f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        }
+        else if (perc > 0.8f) {
+          gltSetText(text, "B");
+          gltColor(0.122f, 0.922f, 0.435f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.75f) {
+          gltSetText(text, "C+");
+          gltColor(0.922f, 0.122f, 0.847f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.7f) {
+          gltSetText(text, "C");
+          gltColor(0.922f, 0.122f, 0.847f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.65f) {
+          gltSetText(text, "D+");
+          gltColor(0.922f, 0.475f, 0.122f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } 
+        else if (perc > 0.6f) {
+          gltSetText(text, "D");
+          gltColor(0.922f, 0.475f, 0.122f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        } else {
+          gltSetText(text, "F");
+          gltColor(1.0f, 0.0f, 0.0f, 1.0f);
+          gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
+        }
+      }
       gltSetText(text, "Hit Space to start/stop playback!");
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2, 4.0f, GLT_CENTER, GLT_TOP);
@@ -617,13 +682,18 @@ void GameUpdate(float deltaTime) {
       gltDrawText2D(text, 120.f, 0.5f, 4.0f);
     }
     if (menuOpen) {
+      // TITLE!
+      gltSetText(text, "A Knight's Rest");
+      gltColor(0.592f, 0.773f, 0.89f, 1.0f);
+      gltDrawText2D(text, 120.f, 60.f, 10.0f);
+
       gltSetText(text, "Start");
       if (selMenuIndex == 0) {
         gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       } else {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
-      gltDrawText2D(text, 120.f, 120.f, 4.0f);
+      gltDrawText2D(text, 120.f, 320.f, 4.0f);
 
       gltSetText(text, "Select Song");
       if (selMenuIndex == 1) {
@@ -631,7 +701,7 @@ void GameUpdate(float deltaTime) {
       } else {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
-      gltDrawText2D(text, 120.f, 200.f, 4.0f);
+      gltDrawText2D(text, 120.f, 400.f, 4.0f);
 
       gltSetText(text, "How to play");
       if (selMenuIndex == 2) {
@@ -639,15 +709,19 @@ void GameUpdate(float deltaTime) {
       } else {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
-      gltDrawText2D(text, 120.f, 280.f, 4.0f);
+      gltDrawText2D(text, 120.f, 480.f, 4.0f);
 
-      gltSetText(text, "Options");
+      if (fullScreen) {
+        gltSetText(text, "Set Windowed");
+      } else {
+        gltSetText(text, "Set Fullscreen");
+      }
       if (selMenuIndex == 3) {
         gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       } else {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
-      gltDrawText2D(text, 120.f, 360.f, 4.0f);
+      gltDrawText2D(text, 120.f, 560.f, 4.0f);
 
       gltSetText(text, "Exit");
       if (selMenuIndex == 4) {
@@ -655,7 +729,7 @@ void GameUpdate(float deltaTime) {
       } else {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
-      gltDrawText2D(text, 120.f, 440.f, 4.0f);
+      gltDrawText2D(text, 120.f, 640.f, 4.0f);
     }
 
     gltEndDraw();
@@ -873,7 +947,17 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
           // how to play
           break;
         case 3:
-          // options
+          // toggle fullscreen/windowed
+          if (glfwGetWindowMonitor(window) == NULL) {
+            fullScreen = true;
+            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 
+                glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
+                glfwGetVideoMode(glfwGetPrimaryMonitor())->height,
+                GLFW_DONT_CARE);
+          } else {
+            fullScreen = false;
+            glfwSetWindowMonitor(window, NULL, 0, 0, 1920, 1080, GLFW_DONT_CARE);
+          }
           break;
         case 4:
           glfwSetWindowShouldClose(window, true);
@@ -926,12 +1010,14 @@ void playString(int string, const char *noteFile, bool octave) {
   ma_engine_play_sound(&engine, noteFile, NULL);
   inputTimes[string-1] = songTime - aNotes[nextNoteIndex[string-1]].time;
   float difference = fabsf(inputTimes[string-1] - 1.0f);
-  if (difference < 0.2 && octave == aNotes[nextNoteIndex[string-1]].octave) {
-    currentScore += 2;
+  if (difference <= 0.2 && octave == aNotes[nextNoteIndex[string-1]].octave) {
+    currentScore += aNotes[nextNoteIndex[string-1]].pointValue;
     aNotes[nextNoteIndex[string-1]].active = false;
     aNotes[nextNoteIndex[string-1]].render = false;
   } else {
-    aNotes[nextNoteIndex[string-1]].active = false;
+    if ( aNotes[nextNoteIndex[string-1]].pointValue > 0) {
+      aNotes[nextNoteIndex[string-1]].pointValue -= 1;
+    }
   }
   setNextNote(string);
 }
@@ -967,6 +1053,13 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     }
     ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
     (void)pInput;
+}
+
+void setSongEnded() {
+  lastScore = currentScore;
+  showScore = true;
+  songStarted = false;
+  resetSong();
 }
 
 
