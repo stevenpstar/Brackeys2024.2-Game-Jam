@@ -46,14 +46,21 @@ void renderNotes(ANote *notes,
       if (notes[i].string < 0) {
         break;
       }
+      if (!notes[i].render) {
+        continue;
+      }
       position[0] = ((notes[i].time - songTime) + 0.225f) * 1.f;
       position[1] = -0.35f - (0.1f * notes[i].string);
-      if (songTime > notes[i].time + 1.0f && notes[i].active) {
-        notes[i].active = false;
+      if (songTime > notes[i].time + 1.0f + 0.2f && notes[i].active) {
         if (nextNoteIndex[notes[i].string-1] == i) {
+          notes[i].active = false;
           setNextNote(notes[i].string);
         }
+      } 
+      if (position[0] < -1.f) {
+        notes[i].render = false;
       }
+
       float aRatio = (float)windowWidth/(float)windowHeight;
       float hRatio = (float)windowHeight/(float)windowWidth;
       mat4x4 model;
@@ -67,11 +74,24 @@ void renderNotes(ANote *notes,
 
       glActiveTexture(GL_TEXTURE0);
       if (notes[i].string == 1 || notes[i].string == 4) {
-        glBindTexture(GL_TEXTURE_2D, blueOctTex);
+        if (notes[i].octave) {
+          glBindTexture(GL_TEXTURE_2D, blueOctTex);
+        }
+        else {
+          glBindTexture(GL_TEXTURE_2D, blueTex);
+        }
       } else if (notes[i].string == 2 || notes[i].string == 5) {
-        glBindTexture(GL_TEXTURE_2D, greenTex);
+        if (notes[i].octave) {
+          glBindTexture(GL_TEXTURE_2D, greenOctTex);
+        } else {
+          glBindTexture(GL_TEXTURE_2D, greenTex);
+        }
       } else if (notes[i].string == 3 || notes[i].string == 6) {
-        glBindTexture(GL_TEXTURE_2D, redTex);
+        if (notes[i].octave) {
+          glBindTexture(GL_TEXTURE_2D, redOctTex);
+        } else {
+          glBindTexture(GL_TEXTURE_2D, redTex);
+        }
       }
       glDrawArrays(GL_TRIANGLES, 0, 6);
     }

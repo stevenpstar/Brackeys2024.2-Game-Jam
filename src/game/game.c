@@ -127,8 +127,8 @@ unsigned int tilesTexture, wallTexture, wallFlagTexture, levelTexture, blackText
 unsigned int blueNoteTex, blueNoteOctTex;
 unsigned int greenNoteTex, greenNoteOctTex;
 unsigned int redNoteTex, redNoteOctTex;
-
-UISprite aKey, sKey, dKey, jKey, kKey, lKey;
+unsigned int noteEffectTex;
+UISprite aKey, sKey, dKey, jKey, kKey, lKey, noteEffect;
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
@@ -248,6 +248,7 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
   vec3 jKeyPos = { -0.8f, -0.7f, -0.1f };
   vec3 kKeyPos = { -0.8f, -0.8f, -0.1f };
   vec3 lKeyPos = { -0.8f, -0.9f, -0.1f };
+  noteEffect = createAnimatedUI(VBO, aKeyPos,"res/noteEffect.png", 32, 32, 128, 32);
   aKey = createAnimatedUI(VBO, aKeyPos,"res/akey.png", 32, 32, 64, 32);
   sKey = createAnimatedUI(VBO, sKeyPos,"res/skey.png", 32, 32, 64, 32);
   dKey = createAnimatedUI(VBO, dKeyPos,"res/dkey.png", 32, 32, 64, 32);
@@ -277,12 +278,14 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
   whiteTexture = loadTextureRGB("res/whitesq.png");
   tilesTexture = createWorld(tiles, "res/floortiles.png", pixels);
 
-  blueNoteTex = loadTextureRGB("res/notebnorm.png");
-  blueNoteOctTex = loadTextureRGB("res/noteboctave.png");
-  greenNoteTex = loadTextureRGB("res/notegnorm.png");
-  greenNoteOctTex = loadTextureRGB("res/notegoctave.png");
-  redNoteTex = loadTextureRGB("res/noternorm.png");
-  redNoteOctTex = loadTextureRGB("res/noteroctave.png");
+  blueNoteTex = loadTexture("res/notebnorm.png");
+  blueNoteOctTex = loadTexture("res/noteboctave.png");
+  greenNoteTex = loadTexture("res/notegnorm.png");
+  greenNoteOctTex = loadTexture("res/notegoctave.png");
+  redNoteTex = loadTexture("res/noternorm.png");
+  redNoteOctTex = loadTexture("res/noteroctave.png");
+
+  noteEffectTex = loadTexture("res/noteeffect.png");
 
   // Character setup
   bardSprite = createAnimatedSprite(VBO, VBO, 
@@ -591,6 +594,8 @@ void GameUpdate(float deltaTime) {
           windowWidth,
           windowHeight);
     }
+      // rendering note effect on key
+
     gltBeginDraw();
     char str[128];
 
@@ -598,7 +603,7 @@ void GameUpdate(float deltaTime) {
       gltSetText(text, "Hit Space to start/stop playback!");
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2, 4.0f, GLT_CENTER, GLT_TOP);
-    
+    } else if (songStarted && !menuOpen) {
       gltSetText(text, itoa(currentScore, str, 10));
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       gltDrawText2D(text, 10.f, 0.5f, 4.0f);
@@ -705,9 +710,13 @@ void setNextNote(int string) {
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   bool guitarAngleChange = false;
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    songStarted = false;
-    resetSong();
-    menuOpen = true;
+    if (!menuOpen) {
+      songStarted = false;
+      resetSong();
+      menuOpen = true;
+    } else {
+      menuOpen = false;
+    }
   }
 //  if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
 //    resetSong();
@@ -839,11 +848,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
       if (selMenuIndex < 4) {
         selMenuIndex++;
+      } else {
+        selMenuIndex = 0;
       }
     }
     if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
       if (selMenuIndex > 0) {
         selMenuIndex--;
+      } else {
+        selMenuIndex = 4;
       }
     }
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS ||
@@ -888,6 +901,7 @@ void resetSong() {
   // reset all notes
   for (int i = 0; i < 1024; i++) {
     aNotes[i].active = true;
+    aNotes[i].render = true;
     aNotes[i].colour[0] = 1.0f;
     aNotes[i].colour[1] = 1.0f;
     aNotes[i].colour[2] = 1.0f;
@@ -912,9 +926,10 @@ void playString(int string, const char *noteFile, bool octave) {
   ma_engine_play_sound(&engine, noteFile, NULL);
   inputTimes[string-1] = songTime - aNotes[nextNoteIndex[string-1]].time;
   float difference = fabsf(inputTimes[string-1] - 1.0f);
-  if (difference < 0.2) {
+  if (difference < 0.2 && octave == aNotes[nextNoteIndex[string-1]].octave) {
     currentScore += 2;
     aNotes[nextNoteIndex[string-1]].active = false;
+    aNotes[nextNoteIndex[string-1]].render = false;
   } else {
     aNotes[nextNoteIndex[string-1]].active = false;
   }

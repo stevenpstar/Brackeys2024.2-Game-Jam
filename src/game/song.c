@@ -23,15 +23,22 @@ void readSong(const char *filePath, ANote *aNotes, int *totalScore) {
         aNotes[noteCount].colour[1] = 0.0f;
         aNotes[noteCount].colour[2] = 0.0f;
         aNotes[noteCount].active = true;
-
+        aNotes[noteCount].render = true;
+        // TODO: This will need to be another strtok to get octave or not
       } 
       token = strtok(NULL, ",");
       if (token != NULL) {
-        printf("Token tho: %s\n", token);
-        printf("Integer token %d\n", (int)atol(token));
         aNotes[noteCount].string = atol(token);
       }  
-      printf("aNote: %f, %d\n", aNotes[noteCount].time, aNotes[noteCount].string);
+      token = strtok(NULL, ",");
+      if (token != NULL) {
+        if (strcmp(token, "o") == 0) {
+          aNotes[noteCount].octave = true;
+        } else {
+          aNotes[noteCount].octave = false;
+        }
+      }  
+
       if (noteCount >= 1024) {
         // emergency exit
         break;

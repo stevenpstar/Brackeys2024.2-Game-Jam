@@ -15,6 +15,8 @@ typedef struct ANote {
   float duration;
   vec3 colour;
   bool active;
+  bool render;
+  bool octave;
 } ANote;
 
 void initNote(Note *note, int string, float time, float duration);
