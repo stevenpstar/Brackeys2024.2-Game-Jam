@@ -38,8 +38,35 @@ bool stringFiveDown = false;
 bool stringSixDown = false;
 bool escKeyDown = false;
 bool shiftDown = false;
+bool cameraShake = false;
+bool cameraLeftShake = false;
 
 bool guitarRotateUp = true;
+
+// Key effect timers, this is really silly but running out of time and fuel :)
+int aKeyTicker = 0;
+int aKeyTime = 10; 
+bool aKeyShowEffect = false;
+
+int sKeyTicker = 0;
+int sKeyTime = 10; 
+bool sKeyShowEffect = false;
+
+int dKeyTicker = 0;
+int dKeyTime = 10; 
+bool dKeyShowEffect = false;
+
+int jKeyTicker = 0;
+int jKeyTime = 10; 
+bool jKeyShowEffect = false;
+
+int kKeyTicker = 0;
+int kKeyTime = 10; 
+bool kKeyShowEffect = false;
+
+int lKeyTicker = 0;
+int lKeyTime = 10; 
+bool lKeyShowEffect = false;
 
 bool songStarted = false;
 bool songEnded = false;
@@ -70,6 +97,10 @@ GLubyte pixels[32*32*3] = {0};
 int cameraIndex = 0;
 int cameraMoveTicker = 0;
 int cameraMoveTime = 1200;
+int cameraShakeTicker = 0;
+int cameraShakeTimer = 50;
+int cameraDirTicker = 0;
+int cameraDirTime = 10;
 vec3 cameraPositions[CAMERA_COUNT] = {
   {10.f, 1.f, 9.0f},
   {8.f, 0.2f, 8.0f},
@@ -134,6 +165,7 @@ unsigned int greenNoteTex, greenNoteOctTex;
 unsigned int redNoteTex, redNoteOctTex;
 unsigned int noteEffectTex;
 UISprite aKey, sKey, dKey, jKey, kKey, lKey, noteEffect, aKeyUI, shiftKey, shiftKeyUI, escKey;
+UISprite aKeyEffect, sKeyEffect, dKeyEffect, jKeyEffect, kKeyEffect, lKeyEffect;
 //shader locations
 unsigned int viewLoc;
 ANote aNotes[1024];
@@ -258,7 +290,13 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
   vec3 jKeyPos = { -0.8f, -0.7f, -0.1f };
   vec3 kKeyPos = { -0.8f, -0.8f, -0.1f };
   vec3 lKeyPos = { -0.8f, -0.9f, -0.1f };
-  noteEffect = createAnimatedUI(VBO, aKeyPos,"res/noteEffect.png", 32, 32, 128, 32);
+//  noteEffect = createAnimatedUI(VBO, aKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  aKeyEffect = createAnimatedUI(VBO, aKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  sKeyEffect = createAnimatedUI(VBO, sKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  dKeyEffect = createAnimatedUI(VBO, dKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  jKeyEffect = createAnimatedUI(VBO, jKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  kKeyEffect = createAnimatedUI(VBO, kKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
+  lKeyEffect = createAnimatedUI(VBO, lKeyPos,"res/noteeffect.png", 16, 16, 64, 16);
   aKey = createAnimatedUI(VBO, aKeyPos,"res/akey.png", 32, 32, 64, 32);
   escKey = createAnimatedUI(VBO, escKeyPos,"res/esckey.png", 32, 32, 64, 32);
   aKeyUI = createAnimatedUI(VBO, aKeyUIPos,"res/akey.png", 32, 32, 64, 32);
@@ -581,6 +619,27 @@ void GameUpdate(float deltaTime) {
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
+
+      // Horrific! :)
+      if (aKeyShowEffect) {
+        if (aKeyTicker < aKeyTime) {
+          aKeyTicker++;
+        } else {
+          aKeyEffect.currentFrame--;
+          aKeyTicker = 0;
+          if (aKeyEffect.currentFrame == 0) {
+            aKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&aKeyEffect,
+          true,
+          VBO,
+          aKeyEffect.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
       renderKey(&sKey,
           stringTwoDown,
           VBO,
@@ -588,6 +647,26 @@ void GameUpdate(float deltaTime) {
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
+
+      if (sKeyShowEffect) {
+        if (sKeyTicker < sKeyTime) {
+          sKeyTicker++;
+        } else {
+          sKeyEffect.currentFrame--;
+          sKeyTicker = 0;
+          if (sKeyEffect.currentFrame == 0) {
+            sKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&sKeyEffect,
+          true,
+          VBO,
+          sKeyEffect.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
       renderKey(&dKey,
           stringThreeDown,
           VBO,
@@ -595,6 +674,26 @@ void GameUpdate(float deltaTime) {
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
+
+      if (dKeyShowEffect) {
+        if (dKeyTicker < dKeyTime) {
+          dKeyTicker++;
+        } else {
+          dKeyEffect.currentFrame--;
+          dKeyTicker = 0;
+          if (dKeyEffect.currentFrame == 0) {
+            dKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&dKeyEffect,
+          true,
+          VBO,
+          dKeyEffect.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
       renderKey(&jKey,
           stringFourDown,
           VBO,
@@ -602,6 +701,27 @@ void GameUpdate(float deltaTime) {
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
+
+      if (jKeyShowEffect) {
+        if (jKeyTicker < jKeyTime) {
+          jKeyTicker++;
+        } else {
+          jKeyEffect.currentFrame--;
+          jKeyTicker = 0;
+          if (jKeyEffect.currentFrame == 0) {
+            jKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&jKeyEffect,
+          true,
+          VBO,
+          jKeyEffect.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
+
       renderKey(&kKey,
           stringFiveDown,
           VBO,
@@ -609,10 +729,49 @@ void GameUpdate(float deltaTime) {
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
+
+      if (kKeyShowEffect) {
+        if (kKeyTicker < kKeyTime) {
+          kKeyTicker++;
+        } else {
+          kKeyEffect.currentFrame--;
+          kKeyTicker = 0;
+          if (kKeyEffect.currentFrame == 0) {
+            kKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&kKeyEffect,
+          true,
+          VBO,
+          kKeyEffect.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
       renderKey(&lKey,
           stringSixDown,
           VBO,
           lKey.texture,
+          uiShader,
+          windowWidth,
+          windowHeight, 0.1f);
+
+      if (lKeyShowEffect) {
+        if (lKeyTicker < lKeyTime) {
+          lKeyTicker++;
+        } else {
+          lKeyEffect.currentFrame--;
+          lKeyTicker = 0;
+          if (lKeyEffect.currentFrame == 0) {
+            lKeyShowEffect = false;
+          }
+        }
+      }  
+      renderKeyEffect(&lKeyEffect,
+          true,
+          VBO,
+          lKeyEffect.texture,
           uiShader,
           windowWidth,
           windowHeight, 0.1f);
@@ -900,7 +1059,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     shiftDown = false;
   }
   if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-    if (mods == 1) {
+    if (shiftDown) {
       playString(1, "res/a4.wav", true);
     } else {
       playString(1, "res/a3.wav", false);
@@ -915,7 +1074,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     stringOneDown = false;
   }
   if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-    if (mods == 1) {
+    if (shiftDown) {
       playString(2, "res/c5.wav", true);
     } else {
       playString(2, "res/c4.wav", false);
@@ -930,7 +1089,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     stringTwoDown = false;
   }
   if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-    if (mods == 1) {
+    if (shiftDown) {
       playString(3, "res/d5.wav", true);
     } else {
       playString(3, "res/d4.wav", false);
@@ -962,7 +1121,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     stringFourDown = false;
   }
   if (key == GLFW_KEY_K && action == GLFW_PRESS) {
-    if (mods == 1) {
+    if (shiftDown) {
       playString(5, "res/f5.wav", true);
     } else {
       playString(5, "res/f4.wav", false);
@@ -1112,12 +1271,48 @@ void playString(int string, const char *noteFile, bool octave) {
     currentScore += aNotes[nextNoteIndex[string-1]].pointValue;
     aNotes[nextNoteIndex[string-1]].active = false;
     aNotes[nextNoteIndex[string-1]].render = false;
+    setNextNote(string);
+    switch(string) {
+      case 1:
+        aKeyShowEffect = true;
+        aKeyEffect.currentFrame = 3;
+        break;
+      case 2:
+        sKeyShowEffect = true;
+        sKeyEffect.currentFrame = 3;
+        break;
+      case 3:
+        dKeyShowEffect = true;
+        dKeyEffect.currentFrame = 3;
+        break;
+      case 4:
+        jKeyShowEffect = true;
+        jKeyEffect.currentFrame = 3;
+        break;
+      case 5:
+        kKeyShowEffect = true;
+        kKeyEffect.currentFrame = 3;
+        break;
+      case 6:
+        lKeyShowEffect = true;
+        lKeyEffect.currentFrame = 3;
+        break;
+      default:
+        lKeyShowEffect = true;
+        lKeyEffect.currentFrame = 3;
+    };
   } else {
-    if ( aNotes[nextNoteIndex[string-1]].pointValue > 0) {
+    ma_engine_play_sound(&engine, "res/mistake.wav", NULL);
+    if ( aNotes[nextNoteIndex[string-1]].pointValue > 1) {
       aNotes[nextNoteIndex[string-1]].pointValue -= 1;
     }
+    if (songStarted) {
+      cameraShake = true;
+      cameraShakeTicker = 0;
+      cameraLeftShake = true;
+      cameraDirTicker = 0;
+    }
   }
-  setNextNote(string);
 }
 
 void moveCamera() {
@@ -1125,7 +1320,29 @@ void moveCamera() {
   vec3 camFront = {0.0f, 0.0f, -1.0f};
   vec3 nFront;
   vec3_scale(nFront, activeCamera->direction, speed);
+  vec3 shake = {0.0f, 0.0f, 0.0f};
+  if (cameraShake) {
+    if (cameraShakeTicker < cameraShakeTimer) {
+      if (cameraLeftShake) {
+        shake[2] = -0.001f;
+        shake[1] = -0.001f;
+      } else {
+        shake[2] = 0.001f;
+        shake[1] = 0.001f;
+      }
+      cameraShakeTicker++;
+      cameraDirTicker++;
+      if (cameraDirTicker > cameraDirTime) {
+        cameraLeftShake = !cameraLeftShake;
+        cameraDirTicker = 0;
+      }
+    } else {
+      cameraShakeTicker = 0;
+      cameraShake = false;
+    }
+  }
   vec3_add(activeCamera->position, activeCamera->position, nFront);
+  vec3_add(activeCamera->position, activeCamera->position, shake);
   cameraMoveTicker++;
   if (cameraMoveTicker > cameraMoveTime) {
     cameraMoveTicker = 0;

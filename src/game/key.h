@@ -11,4 +11,15 @@ void renderKey(
     int windowWidth,
     int windowHeight,
     float xScale);
+
+void renderKeyEffect(
+    UISprite *key,
+    bool flag,
+    unsigned int VBO,
+    unsigned int texture,
+    unsigned int shader,
+    int windowWidth,
+    int windowHeight,
+    float xScale);
+
 #endif
