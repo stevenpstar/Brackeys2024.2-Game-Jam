@@ -1246,6 +1246,7 @@ void resetSong() {
     aNotes[i].colour[0] = 1.0f;
     aNotes[i].colour[1] = 1.0f;
     aNotes[i].colour[2] = 1.0f;
+    aNotes[i].pointValue = 2;
   }
   inputTimes[0] = 0.0f;
   inputTimes[1] = 0.0f;
@@ -1302,11 +1303,11 @@ void playString(int string, const char *noteFile, bool octave) {
         lKeyEffect.currentFrame = 3;
     };
   } else {
-    ma_engine_play_sound(&engine, "res/mistake.wav", NULL);
-    if ( aNotes[nextNoteIndex[string-1]].pointValue > 1) {
+    if ( aNotes[nextNoteIndex[string-1]].pointValue > 0 && songStarted) {
       aNotes[nextNoteIndex[string-1]].pointValue -= 1;
     }
     if (songStarted) {
+      ma_engine_play_sound(&engine, "res/mistake.wav", NULL);
       cameraShake = true;
       cameraShakeTicker = 0;
       cameraLeftShake = true;
