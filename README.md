@@ -5,6 +5,8 @@ Calm Before the Storm - Brackeys 2024.2 Game Jam Entry.
 
 Custom OpenGL Engine (GLFW/GLAD) written in C.
 
+Download here: https://starven.itch.io/a-knights-rest
+
 ---
 
 Your adventuring party has reached the entrance to the final floor of the dungeon. Weary and tired, you make rest at the top of the stairs, as the sound of a storm rages from below.
