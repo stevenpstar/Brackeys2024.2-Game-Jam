@@ -24,5 +24,5 @@ Libraries
 - https://github.com/vallentin/glText for Text Rendering
 
 ---
-![Game Screenshot]("knightsrestpreview.png")
 
+![knightsrestpreview](https://github.com/user-attachments/assets/8b00ee61-4aeb-46e9-9b00-b977aac89b71)
