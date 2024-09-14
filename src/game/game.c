@@ -77,6 +77,8 @@ bool showHowToPlay = false;
 
 void (*GameSetScreen)(int);
 
+char songName[612];
+
 // menu vars
 int selMenuIndex = 0;
 
@@ -211,6 +213,7 @@ GLTtext *text;
 void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
   // reset this when scene loads
   selMenuIndex = 0;
+  showScore = false;
   GameSetScreen = SetScreen;
   gltInit();
   text = gltCreateText();
@@ -423,6 +426,8 @@ void InitGame(void (*SetScreen)(int), char selectedSong[512], int w, int h) {
 
   // load song data
   // If song directory + name is over 2000 characters I dunno what to tell you.
+  strcpy(songName, "Playing: ");
+  strcat(songName, selectedSong);
   char songFile[2000];
   strcpy(songFile, "res/songs/");
   strcat(songFile, selectedSong);
@@ -897,27 +902,29 @@ void GameUpdate(float deltaTime) {
           gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2 - 200.0f, gradeScale, GLT_CENTER, GLT_TOP);
         }
       }
+
+      gltSetText(text, songName);
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2DAligned(text, (float)windowWidth / 2, 10.f, 4.0f, GLT_CENTER, GLT_TOP);
+
       gltSetText(text, "Hit Space to start/stop playback!");
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
       gltDrawText2DAligned(text, (float)windowWidth / 2, (float)windowHeight / 2, 4.0f, GLT_CENTER, GLT_TOP);
     } else if (songStarted && !menuOpen) {
-      gltSetText(text, itoa(currentScore, str, 10));
+      gltSetText(text, songName);
       gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-      gltDrawText2D(text, 10.f, 0.5f, 4.0f);
-
-      gltSetText(text, "/");
-      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-      gltDrawText2D(text, 80.f, 0.5f, 4.0f);
-
-      gltSetText(text, itoa(totalScore, str, 10));
-      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-      gltDrawText2D(text, 120.f, 0.5f, 4.0f);
+      gltDrawText2DAligned(text, (float)windowWidth / 2, 10.f, 4.0f, GLT_CENTER, GLT_TOP);
     }
     if (menuOpen) {
       // TITLE!
       gltSetText(text, "A Knight's Rest");
       gltColor(0.592f, 0.773f, 0.89f, 1.0f);
       gltDrawText2D(text, 120.f, 60.f, 10.0f);
+
+      // version
+      gltSetText(text, "v1.0");
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2DAligned(text, (float)windowWidth, (float)windowHeight - 10.f, 2.0f, GLT_RIGHT, GLT_BOTTOM);
 
       gltSetText(text, "Start");
       if (selMenuIndex == 0) {
@@ -962,6 +969,10 @@ void GameUpdate(float deltaTime) {
         gltColor(0.5f, 0.5f, 0.5f, 1.0f);
       }
       gltDrawText2D(text, 120.f, 640.f, 4.0f);
+
+      gltSetText(text, "github.com/stevenpstar");
+      gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+      gltDrawText2DAligned(text, 10.f, windowHeight - 10.f, 2.0f, GLT_LEFT, GLT_BOTTOM);
 
       // how to play section
       showHowToPlay = selMenuIndex == 2;

@@ -65,7 +65,7 @@ int main(void) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glViewport(0, 0, 800, 600);
 
-  SetScreen(GAME);
+  SetScreen(MAINMENU);
 
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -125,7 +125,6 @@ int main(void) {
 void SetScreen(int screen) {
   if (!initialLoad) {
     if (screen == MAINMENU) {
-      printf("Might crash here on initial load\n");
       CleanUpMainMenu();
     } else if (screen == SONGSELECT) {
       CleanUpSelectSong();

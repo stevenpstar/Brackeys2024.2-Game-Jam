@@ -13,7 +13,6 @@ void Animate(Player *player, Animation anim, bool loop, float deltaTime, unsigne
   // This is stupid but ye
   if (player->anim->state == RUN_LEFT || player->anim->state == IDLE_LEFT) {
     flipHoriz = true;
-    //printf("FLIP!");
   }
   if (player->sprite->currentFrame < startFrame || player->sprite->currentFrame > endFrame) {
     player->sprite->currentFrame = startFrame;
@@ -62,7 +61,6 @@ void processPlayerMovementNew(Player *player, Inputs *input, float deltaTime, in
       player->anim->state = RUN_UP;
       player->anim->startFrame = 20;
       player->anim->endFrame = 23;
-      printf("player->anim->changing?: %d\n", player->anim->state);
     }
     mVert = -1;
   }

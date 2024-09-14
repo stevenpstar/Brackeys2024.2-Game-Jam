@@ -92,14 +92,6 @@ void InitSelectSong(void (*SetScreen)(int), void (*SetSelectedSong)(char[512]), 
 }
 void UpdateSelectSong(float deltaTime) {
   glUseProgram(SM_uiShader);
-//  renderKey(&SM_escKey,
-//      false,
-//      SM_VBO,
-//      SM_escKey.texture,
-//      SM_uiShader,
-//      SM_width,
-//      SM_height, 0.1f);
-
   gltBeginDraw();
   for (int i = 0;i<200;i++) {
     gltSetText(SM_text, songList[i]);
@@ -129,7 +121,7 @@ void SetSongList(char songs[200][512]) {
     strcpy(songs[i], "");
   }
   FILE *fp;
-  fp = fopen("res/songlist.txt", "r");
+  fp = fopen("res/songs/songlist.txt", "r");
   char s[1024];
   int songCount = 0;
   int songIndex = 0;
@@ -141,7 +133,6 @@ void SetSongList(char songs[200][512]) {
       songs[songIndex][strcspn(songs[songIndex], "\n")] = 0;
       songIndex++;
       songCount++;
-      printf("S: %s\n", s);
     }
   }
   fclose(fp);
@@ -149,7 +140,7 @@ void SetSongList(char songs[200][512]) {
 }
 int GetSongCount() {
   FILE *fp;
-  fp = fopen("res/songlist.txt", "r");
+  fp = fopen("res/songs/songlist.txt", "r");
   char s[1024];
   int songCount = 0;
   if (fp == NULL) {
